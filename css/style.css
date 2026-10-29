@@ -27,6 +27,14 @@
   --map-5: #256abf;
   --map-6: #184f95;
   --map-7: #0d366b;
+
+  /* Property lot colours when zoomed in, by $ change in tax bill. */
+  --lot-down-2: #184f95;   /* biggest decreases */
+  --lot-down-1: #6da7ec;   /* small decreases */
+  --lot-up-1:   #fbd3d2;   /* small increases */
+  --lot-up-2:   #f29a99;
+  --lot-up-3:   #e34948;
+  --lot-up-4:   #9c2322;   /* biggest increases */
 }
 
 @media (prefers-color-scheme: dark) {

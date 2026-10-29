@@ -351,5 +351,11 @@
    "count": 47
   }
  ],
- "assessment_changed": false
+ "assessment_changed": false,
+ "map": {
+  "parcels_in_shapefile": 166984,
+  "properties_matched_to_parcel": 185676,
+  "properties_not_on_map": 627,
+  "parcels_on_map": 163017
+ }
 }

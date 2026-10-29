@@ -75,13 +75,15 @@ async function init() {
   const n = state.summary.notes;
   $("data-notes").textContent =
     `${fmtCount(n.rows_after_cleaning)} properties in the file; ${fmtCount(n.properties_in_stats)} used in the ` +
-    `statistics (${fmtCount(n.untaxed_or_unassigned)} had no tax in one of the years or no ward).`;
+    `statistics (${fmtCount(n.untaxed_or_unassigned)} had no tax in one of the years or no ward).` +
+    (state.summary.map ? ` ${fmtCount(state.summary.map.properties_matched_to_parcel)} properties are shown on the map; ` +
+      `${fmtCount(state.summary.map.properties_not_on_map)} could not be matched to a lot. Ward outlines are traced from the lots and are approximate.` : "");
 
   // Redraw charts in the right colours when the device switches light/dark.
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     renderWardChart();
     renderDistChart();
-    if (state.mapLayer) styleMap();
+    if (state.mapLayer) { styleMap(); restyleParcels(); }
   });
 }
 
@@ -299,6 +301,11 @@ function renderTable() {
 }
 
 // ---------- map --------------------------------------------------------
+// Zoomed out, the map colours whole wards by the measure picked above.
+// Zoomed in (CONFIG.MAP.parcelZoom or closer), it shows every property lot
+// coloured by its $ change, loading one ward's lots at a time.
+
+const parcelCache = {};   // ward number -> Leaflet layer (or a Promise while loading)
 
 async function initMap() {
   const slot = $("map-slot");
@@ -315,28 +322,52 @@ async function initMap() {
     return;
   }
 
-  slot.innerHTML = '<div id="map" role="region" aria-label="Map of wards"></div>';
+  slot.innerHTML =
+    '<div id="map" role="region" aria-label="Map of wards and properties"></div>' +
+    '<p class="note" id="map-hint"></p>';
   state.map = L.map("map", { scrollWheelZoom: false }).setView(CONFIG.MAP.center, CONFIG.MAP.zoom);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     maxZoom: 19,
   }).addTo(state.map);
 
+  state.parcelPane = state.map.createPane("parcels");
+  state.parcelPane.style.zIndex = 390; // under the ward outlines (overlayPane is 400)
+  state.parcelRenderer = L.canvas({ pane: "parcels" });
+
+  // Wards get their own layer so it can be made click-through when zoomed in.
+  state.map.createPane("wards").style.zIndex = 400;
   state.mapLayer = L.geoJSON(geo, {
+    pane: "wards",
+    renderer: L.svg({ pane: "wards" }),
     onEachFeature: (feature, layer) => {
       layer.on({
-        click: () => { const w = wardOf(feature); if (w) selectWard(w); },
-        mouseover: () => layer.setStyle({ weight: 3 }),
+        click: (e) => {
+          const w = wardOf(feature);
+          if (!w) return;
+          if (showingParcels()) return; // let clicks reach the property underneath
+          selectWard(w);
+          state.map.fitBounds(layer.getBounds());
+        },
+        mouseover: () => { if (!showingParcels()) layer.setStyle({ weight: 3 }); },
         mouseout: () => styleMap(),
       });
     },
   }).addTo(state.map);
+  state.wardBounds = {};
+  state.mapLayer.eachLayer((l) => { state.wardBounds[wardOf(l.feature)] = l.getBounds(); });
+
   state.map.fitBounds(state.mapLayer.getBounds());
+  state.map.on("zoomend moveend", updateParcels);
   styleMap();
 }
 
 function wardOf(feature) {
   return Number(feature.properties[CONFIG.MAP.joinField]);
+}
+
+function showingParcels() {
+  return state.map && state.map.getZoom() >= CONFIG.MAP.parcelZoom;
 }
 
 // Splits ward values into equal-count groups and returns the cut points.
@@ -349,6 +380,7 @@ function breaks(values, steps) {
 
 function styleMap() {
   const key = state.metric;
+  const zoomedIn = showingParcels();
   const byWard = Object.fromEntries(state.summary.wards.map((w) => [w.ward, w]));
   const steps = Math.min(7, Math.max(3, CONFIG.MAP.colourSteps));
   const cuts = breaks(state.summary.wards.map((w) => w[key]), steps);
@@ -358,38 +390,157 @@ function styleMap() {
   );
   const classOf = (v) => cuts.filter((c) => v >= c).length;
 
+  state.map.getPane("wards").style.pointerEvents = zoomedIn ? "none" : "";
   state.mapLayer.eachLayer((layer) => {
     const w = wardOf(layer.feature);
     const d = byWard[w];
     const selected = w === state.selectedWard;
     layer.setStyle({
       fillColor: d ? palette[classOf(d[key])] : css("--no-change"),
+      fill: !zoomedIn, // zoomed in: outline only, so clicks reach the lots
       fillOpacity: 0.8,
-      color: selected ? css("--highlight") : css("--card-bg"),
-      weight: selected ? 4 : 1.5,
+      color: selected ? css("--highlight") : zoomedIn ? css("--text-soft") : css("--card-bg"),
+      weight: selected ? 4 : zoomedIn ? 2 : 1.5,
     });
     if (selected) layer.bringToFront();
-    layer.bindTooltip(
+    if (zoomedIn) layer.unbindTooltip();
+    else layer.bindTooltip(
       d ? `<strong>${escapeHtml(wardLabel(w))}</strong><br>${CONFIG.WARD_METRICS[key].label}: ${formatMetric(key, d[key])}`
         : `Ward ${escapeHtml(w)} (no data)`,
       { sticky: true }
     );
   });
 
+  if (zoomedIn) {
+    setLegend("Change in tax bill", parcelClasses().map((c) => [c.colour, c.label]));
+    $("map-hint").textContent = "Each shape is a property lot. Tap or click one for details. Zoom out to compare wards.";
+  } else {
+    const edges = [null, ...cuts, null];
+    setLegend(CONFIG.WARD_METRICS[key].label, palette.map((col, i) => {
+      const lo = edges[i], hi = edges[i + 1];
+      return [col, lo === null ? `under ${formatMetric(key, hi)}` : hi === null ? `${formatMetric(key, lo)} or more` : `${formatMetric(key, lo)} to ${formatMetric(key, hi)}`];
+    }));
+    $("map-hint").textContent = "Click a ward to zoom in. Zoom in further to see individual properties.";
+  }
+}
+
+function setLegend(title, rows) {
   if (state.legend) state.legend.remove();
   state.legend = L.control({ position: "bottomright" });
   state.legend.onAdd = () => {
     const div = L.DomUtil.create("div", "legend");
-    const edges = [null, ...cuts, null];
-    const rows = palette.map((col, i) => {
-      const lo = edges[i], hi = edges[i + 1];
-      const text = lo === null ? `under ${formatMetric(key, hi)}` : hi === null ? `${formatMetric(key, lo)} or more` : `${formatMetric(key, lo)} to ${formatMetric(key, hi)}`;
-      return `<div><i style="background:${col}"></i>${text}</div>`;
-    });
-    div.innerHTML = `<strong>${CONFIG.WARD_METRICS[key].label}</strong>` + rows.join("");
+    div.innerHTML = `<strong>${escapeHtml(title)}</strong>` +
+      rows.map(([col, text]) => `<div><i style="background:${col}"></i>${escapeHtml(text)}</div>`).join("");
     return div;
   };
   state.legend.addTo(state.map);
+}
+
+// ---------- property lots ---------------------------------------------
+
+// Colour classes for lots, built from CONFIG.MAP.parcelBreaks.
+function parcelClasses() {
+  const down = [...CONFIG.MAP.parcelBreaks.decrease].sort((a, b) => a - b);  // e.g. [-100]
+  const up = [...CONFIG.MAP.parcelBreaks.increase].sort((a, b) => a - b);    // e.g. [50, 100, 200]
+  const classes = [];
+  const downCols = [css("--lot-down-2"), css("--lot-down-1")];
+  [-Infinity, ...down].forEach((lo, i, arr) => {
+    const hi = i + 1 < arr.length ? arr[i + 1] : 0;
+    classes.push({
+      test: (c) => c < hi && c >= lo,
+      colour: downCols[Math.max(0, downCols.length - arr.length + i)],
+      label: lo === -Infinity ? `down more than ${fmtDollars(-hi)}` : `down up to ${fmtDollars(-lo)}`,
+    });
+  });
+  classes.push({ test: (c) => c === 0, colour: css("--no-change"), label: "no change" });
+  const upCols = [1, 2, 3, 4].map((i) => css(`--lot-up-${i}`));
+  [0, ...up].forEach((lo, i, arr) => {
+    const hi = i + 1 < arr.length ? arr[i + 1] : Infinity;
+    classes.push({
+      test: (c) => c > lo && c <= hi,
+      colour: upCols[Math.min(upCols.length - 1, Math.round((i * (upCols.length - 1)) / Math.max(1, arr.length - 1)))],
+      label: hi === Infinity ? `up more than ${fmtDollars(lo)}` : lo === 0 ? `up to ${fmtDollars(hi)}` : `up ${fmtDollars(lo)} to ${fmtDollars(hi)}`,
+    });
+  });
+  return classes;
+}
+
+function parcelStyle(feature) {
+  const p = feature.properties;
+  const cls = p.x ? null : state.parcelClassList.find((c) => c.test(p.c));
+  return {
+    renderer: state.parcelRenderer,
+    fillColor: cls ? cls.colour : css("--line"),
+    fillOpacity: 0.85,
+    color: css("--card-bg"),
+    weight: 0.5,
+  };
+}
+
+function parcelPopup(p) {
+  const y0 = CONFIG.yearBefore, y1 = CONFIG.yearAfter;
+  if (p.x) return `<strong>${escapeHtml(p.a)}</strong><br>No property tax in ${y0} or ${y1}.`;
+  const units = p.n > 1
+    ? `<br>${fmtCount(p.n)} units on this lot. Typical unit: ${fmtSignedDollars(p.c)} (${fmtSignedPercent(p.p)})<br>All units: ${fmtDollars(p.t0)} → ${fmtDollars(p.t1)}`
+    : `<br>${y0}: ${fmtDollars(p.t0)} → ${y1}: ${fmtDollars(p.t1)}<br>Change: ${fmtSignedDollars(p.c)} (${fmtSignedPercent(p.p)})`;
+  return `<strong>${escapeHtml(p.a)}</strong>${units}`;
+}
+
+function loadWardParcels(ward) {
+  if (parcelCache[ward]) return parcelCache[ward];
+  parcelCache[ward] = fetch(`${CONFIG.MAP.parcelFolder}/ward-${ward}.json`)
+    .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then((geo) => {
+      const layer = L.geoJSON(geo, {
+        pane: "parcels",
+        style: parcelStyle,
+        onEachFeature: (f, l) => l.bindPopup(() => parcelPopup(f.properties)),
+      });
+      parcelCache[ward] = layer;
+      return layer;
+    })
+    .catch(() => { delete parcelCache[ward]; return null; });
+  return parcelCache[ward];
+}
+
+let parcelsWereShown = false;
+
+async function updateParcels() {
+  const show = showingParcels();
+  if (show !== parcelsWereShown) {
+    parcelsWereShown = show;
+    styleMap();
+  }
+  state.parcelClassList = parcelClasses();
+  const view = state.map.getBounds();
+  for (const [ward, bounds] of Object.entries(state.wardBounds)) {
+    const wanted = show && bounds.intersects(view);
+    const cached = parcelCache[ward];
+    if (wanted) {
+      const layer = await loadWardParcels(ward);
+      // The view may have changed while the file was loading.
+      if (layer && showingParcels() && state.wardBounds[ward].intersects(state.map.getBounds())) layer.addTo(state.map);
+    } else if (cached && cached.remove) {
+      cached.remove();
+    }
+  }
+}
+
+// Recolour loaded lots (after the light/dark switch).
+function restyleParcels() {
+  state.parcelClassList = parcelClasses();
+  Object.values(parcelCache).forEach((l) => l.setStyle && l.setStyle(parcelStyle));
+}
+
+// Zooms the map to a property found with the lookup.
+function showOnMap(lat, lon, label) {
+  if (!state.map || lat == null) return;
+  if (state.pin) state.pin.remove();
+  state.pin = L.circleMarker([lat, lon], {
+    radius: 9, color: css("--card-bg"), weight: 3, fillColor: css("--highlight"), fillOpacity: 1,
+  }).bindTooltip(escapeHtml(label), { permanent: true, direction: "top", offset: [0, -8] }).addTo(state.map);
+  state.map.setView([lat, lon], Math.max(CONFIG.MAP.parcelZoom + 2, state.map.getZoom()));
+  $("map-slot").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 // ---------- property lookup -------------------------------------------
@@ -450,7 +601,7 @@ function runSearch() {
 }
 
 function showDetail(p) {
-  const [address, ward, roll, assessment, t0, t1, change, pct] = p;
+  const [address, ward, roll, assessment, t0, t1, change, pct, lat] = p;
   const wardStats = state.summary.wards.find((w) => w.ward === ward);
   const city = state.summary.city;
   const y0 = CONFIG.yearBefore, y1 = CONFIG.yearAfter;
@@ -469,9 +620,11 @@ function showDetail(p) {
       <dt>${y1} taxes</dt><dd>${fmtDollars(t1)}</dd>
       <dt>Change</dt><dd class="${change > 0 ? "up" : change < 0 ? "down" : ""}">${fmtSignedDollars(change)} (${fmtSignedPercent(pct)})</dd>
     </dl>
+    ${lat == null ? '<p class="note">This property could not be placed on the map.</p>' : ""}
     ${wardStats && t1 > 0 ? `<p class="note">That change is ${compare(change, wardStats.median_dollar_change)} the typical ${fmtSignedDollars(wardStats.median_dollar_change)} in ${wardLabel(ward)}, and ${compare(change, city.median_dollar_change)} the typical ${fmtSignedDollars(city.median_dollar_change)} city-wide.</p>` : ""}
   </div>`;
   if (wardStats && state.selectedWard !== ward) selectWard(ward);
+  showOnMap(p[8], p[9], address);
 }
 
 init();

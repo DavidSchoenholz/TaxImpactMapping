@@ -1,10 +1,11 @@
 """
 Turns the raw CSV into small JSON files the website reads.
 
-Run it again any time the CSV changes:
+Run it again any time the CSV or the parcel shapefile changes:
     python3 scripts/build_data.py
 
-Needs Python 3 with pandas (pip install pandas).
+Needs Python 3 with pandas (pip install pandas). The map files also need
+geopandas (pip install geopandas); without it they are skipped.
 """
 import json
 from pathlib import Path
@@ -95,17 +96,32 @@ def main():
         "histogram": histogram(taxed["PERCENT_CHANGE_TAXES"]),
         "assessment_changed": bool((df["ASSESSMENT_CHANGE"] != 0).any()),
     }
+
+    # Map files and property locations, if the parcel shapefile is present.
+    df["LAT"] = None
+    df["LON"] = None
+    try:
+        import parcel_map
+    except ImportError as e:
+        print(f"Skipping map files ({e}).")
+        parcel_map = None
+    if parcel_map and parcel_map.available():
+        df["LAT"], df["LON"], summary["map"] = parcel_map.build(df)
+        print(json.dumps(summary["map"], indent=1))
+
     (OUT_DIR / "summary.json").write_text(json.dumps(summary, indent=1))
 
     # Compact lookup table: one short array per property.
     cols = ["PROPERTY_ADDRESS", "WARD", "ROLL_NO", "ASSESSMENT_2021",
-            "TAXES_2020", "TAXES_2021", "DOLLAR_CHANGE_TAXES", "PERCENT_CHANGE_TAXES"]
+            "TAXES_2020", "TAXES_2021", "DOLLAR_CHANGE_TAXES", "PERCENT_CHANGE_TAXES",
+            "LAT", "LON"]
     lookup = df.sort_values("PROPERTY_ADDRESS")[cols]
-    rows = [[r[0], int(r[1]), r[2], int(r[3]), int(r[4]), int(r[5]), int(r[6]), float(r[7])]
+    rows = [[r[0], int(r[1]), r[2], int(r[3]), int(r[4]), int(r[5]), int(r[6]), float(r[7]),
+             None if pd.isna(r[8]) else r[8], None if pd.isna(r[9]) else r[9]]
             for r in lookup.itertuples(index=False)]
     (OUT_DIR / "properties.json").write_text(
         json.dumps({"columns": ["address", "ward", "roll", "assessment", "tax2020",
-                                "tax2021", "change", "pct"], "rows": rows},
+                                "tax2021", "change", "pct", "lat", "lon"], "rows": rows},
                    separators=(",", ":")))
 
     print(json.dumps(notes, indent=1))

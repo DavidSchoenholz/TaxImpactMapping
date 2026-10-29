@@ -1,0 +1,5 @@
+Property Parcels - Assessment (layer 5)
+source: https://spatialsolutions.hamilton.ca/webgis/rest/services/General/Property/MapServer/5
+original field -> shapefile field
+  OBJECTID -> OBJECTID
+  ARN -> ARN

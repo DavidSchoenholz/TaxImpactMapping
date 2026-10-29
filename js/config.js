@@ -49,8 +49,20 @@ const CONFIG = {
     // Starting view: [latitude, longitude] and zoom (bigger = closer).
     center: [43.22, -79.88],
     zoom: 10,
-    // How many colour steps the map uses (3 to 7).
+    // How many colour steps the ward map uses (3 to 7).
     colourSteps: 5,
+
+    // Zoom level at which the map switches from wards to individual
+    // property lots (bigger = you have to zoom in further).
+    parcelZoom: 14,
+    // Folder holding the property lot files (made by scripts/build_data.py).
+    parcelFolder: "data/parcels",
+    // Dollar amounts where the lot colours change. Colours are set in
+    // css/style.css (--lot-down-... and --lot-up-...).
+    parcelBreaks: {
+      decrease: [-100],          // one value, below 0
+      increase: [50, 100, 200],  // up to 3 values, each above 0
+    },
   },
 
   // ---- Property lookup -----------------------------------------------
