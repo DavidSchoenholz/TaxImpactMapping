@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Property Tax Map</title>
+  <meta name="description" content="Every Hamilton property coloured by its 2021 tax change, assessed value and more.">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 id="title">Property Tax Map</h1>
+      <p id="subtitle">Every property, coloured by the measure you pick. Click a property for its details.</p>
+      <p class="nav"><a href="index.html">← Back to the summary</a></p>
+    </header>
+
+    <section aria-labelledby="h-map">
+      <h2 id="h-map" class="visually-hidden">Map</h2>
+      <div class="layer-picker" id="layer-picker" role="group" aria-label="Map layer"></div>
+      <p class="lede" id="layer-about"></p>
+      <div class="card">
+        <div id="map-slot"></div>
+        <p class="note" id="map-status"></p>
+      </div>
+    </section>
+
+    <footer>
+      <p id="source"></p>
+    </footer>
+  </div>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/map.js"></script>
+</body>
+</html>

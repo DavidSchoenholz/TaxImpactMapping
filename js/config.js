@@ -55,4 +55,34 @@ const CONFIG = {
 
   // ---- Property lookup -----------------------------------------------
   lookupMaxResults: 25,
+
+  // ---- Property map (map.html) ---------------------------------------
+  PROPERTY_MAP: {
+    // Shapes file with one shape (parcel outline or address point) per
+    // property. Until this file exists the page shows a "coming soon" note.
+    geojsonFile: "data/properties.geojson",
+    // Name of the column in the shapes file that holds the roll number.
+    // Dashes and spaces in the roll number are ignored.
+    joinField: "ROLL_NO",
+    // Which layer is shown when the page opens (a key from PROPERTY_LAYERS).
+    defaultLayer: "dollar_change",
+    // Size of the dots when the shapes are points.
+    pointRadius: 3,
+  },
+
+  // The layers people can switch between. Remove a line to hide one.
+  //   label = name on the button
+  //   about = sentence shown under the buttons
+  PROPERTY_LAYERS: {
+    dollar_change: { label: "Tax increase ($)",
+      about: "How much the tax bill went up (red) or down (blue) from 2020 to 2021, in dollars." },
+    pct_change:    { label: "Tax increase (%)",
+      about: "How much the tax bill went up (red) or down (blue) from 2020 to 2021, as a percent of the 2020 bill." },
+    assessment:    { label: "Assessed value",
+      about: "The property's assessed value. Darker means a higher value." },
+    tax_2021:      { label: "2021 tax bill",
+      about: "The total 2021 tax bill. Darker means a bigger bill." },
+    tax_rate:      { label: "Effective tax rate",
+      about: "The 2021 bill as a percent of assessed value. Farms pay the lowest rates and homes about 1.2%. Apartments, shops and industry pay 2.5% or more." },
+  },
 };

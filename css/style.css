@@ -27,6 +27,16 @@
   --map-5: #256abf;
   --map-6: #184f95;
   --map-7: #0d366b;
+
+  /* Property map: tax going down (light to dark) and up (light to dark). */
+  --down-1: #9ec5f4;
+  --down-2: #3987e5;
+  --down-3: #184f95;
+  --up-1:   #fbd3cf;
+  --up-2:   #f39a92;
+  --up-3:   #e34948;
+  --up-4:   #a3201f;
+  --no-data: #c3c2b7;   /* properties with no tax or no matching data */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -170,3 +180,23 @@ footer { padding: 24px 0 48px; color: var(--text-muted); font-size: 0.85rem; }
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
 }
+
+/* Property map page */
+.nav { margin-top: 8px; font-size: 0.95rem; }
+.layer-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.layer-picker button {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.layer-picker button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+#property-map { height: 70vh; min-height: 420px; border-radius: 8px; }
+.legend .count { color: var(--text-muted); margin-left: 6px; }
+.leaflet-popup-content dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 6px 0 0; }
+.leaflet-popup-content dt { color: #52514e; }
+.leaflet-popup-content dd { margin: 0; font-variant-numeric: tabular-nums; }

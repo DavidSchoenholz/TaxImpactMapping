@@ -12,6 +12,15 @@ The page includes:
 
 The map shows a "coming soon" box until the ward boundary file is added (see below).
 
+There is also a **property map** (`map.html`, linked from the top of the main page). It colours every property, and you can switch between these layers:
+
+- **Tax increase ($)** and **Tax increase (%)**: red for bills that went up, blue for bills that went down, grey for no change.
+- **Assessed value**: darker means a higher value.
+- **2021 tax bill**: darker means a bigger bill.
+- **Effective tax rate**: the bill as a percent of assessed value. This picks out farms (lowest rate), homes (about 1.2%) and apartments, shops and industry (2.5% or more).
+
+Click a property for its details. The legend shows how many properties fall in each colour. Ward outlines are drawn on top once the ward file is added. The property map shows a "coming soon" box until the property shapes file is added (see below).
+
 ---
 
 ## Changing words, settings and colours (no coding needed)
@@ -23,6 +32,8 @@ The map shows a "coming soon" box until the ward boundary file is added (see bel
 | The measures in the drop-down | `js/config.js` | `WARD_METRICS` (delete a line to hide one) |
 | Ward names (e.g. "Ward 1 – Chedoke-Cootes") | `js/config.js` | `WARD_NAMES` |
 | Map starting position, colour steps | `js/config.js` | `MAP` |
+| Property map layers, their names and descriptions | `js/config.js` | `PROPERTY_LAYERS` |
+| Property map file name, roll-number column, dot size | `js/config.js` | `PROPERTY_MAP` |
 | **Any colour** | `css/style.css` | the block at the very top |
 
 To edit a file on GitHub, open it, click the ✏️ pencil icon, make your change and click **Commit changes**.
@@ -50,7 +61,15 @@ The map should then appear.
 
 The map matches shapes to wards using a column in the shapefile that holds the ward number. If that column isn't called `WARD`, change `joinField` in `js/config.js` to its name. You can see the column names in mapshaper by clicking a shape with the **i** tool.
 
-> If your shapefile turns out to be property parcels rather than wards, the steps are different. The `ROLL_NO` column can link parcels to this data, but 186,000 shapes are too many to load in a browser as-is.
+## Adding the property shapes (for the property map)
+
+The property map needs one shape per property: either parcel outlines or address points. Each shape must carry the property's roll number. The map uses the roll number to look up that property's tax data.
+
+1. Convert the file to GeoJSON in WGS84, the same way as the ward file above. For parcels, simplify more (about 5%), because 186,000 outlines make a large file.
+2. Name it `properties.geojson` and upload it into the `data` folder.
+3. If the roll-number column isn't called `ROLL_NO`, change `joinField` under `PROPERTY_MAP` in `js/config.js`. Dashes and spaces in roll numbers are ignored. The tax data uses 15-digit roll numbers that start with `2518`.
+
+Under the map, a line reports how many shapes were linked to tax data. Shapes with no match are drawn grey.
 
 ---
 
@@ -99,7 +118,10 @@ Assessed values are identical in 2020 and 2021 (the province froze reassessment)
 ```
 index.html          the page
 js/config.js        settings you can edit
+map.html            the property map page
 js/app.js           page logic (charts, map, search)
+js/map.js           property map logic
+js/common.js        formatting helpers shared by both pages
 css/style.css       colours (top) and layout
 data/               processed data (+ raw CSV in data/raw)
 scripts/            data preparation script
