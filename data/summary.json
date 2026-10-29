@@ -1,0 +1,355 @@
+{
+ "notes": {
+  "rows_in_csv": 186525,
+  "rows_after_cleaning": 186303,
+  "properties_in_stats": 180908,
+  "untaxed_or_unassigned": 5395
+ },
+ "city": {
+  "properties": 180908,
+  "median_tax_2020": 4030,
+  "median_tax_2021": 4109,
+  "median_dollar_change": 66,
+  "median_percent_change": 1.7,
+  "median_assessment": 357000,
+  "total_tax_2020": 1125641149,
+  "total_tax_2021": 1132946742,
+  "share_increase": 0.9607,
+  "share_decrease": 0.0352
+ },
+ "wards": [
+  {
+   "ward": 1,
+   "properties": 10247,
+   "median_tax_2020": 4754,
+   "median_tax_2021": 4834,
+   "median_dollar_change": 77,
+   "median_percent_change": 1.7,
+   "median_assessment": 398000,
+   "total_tax_2020": 70929499,
+   "total_tax_2021": 71455730,
+   "share_increase": 0.9512,
+   "share_decrease": 0.0408
+  },
+  {
+   "ward": 2,
+   "properties": 8443,
+   "median_tax_2020": 3090,
+   "median_tax_2021": 3142,
+   "median_dollar_change": 46,
+   "median_percent_change": 1.7,
+   "median_assessment": 258000,
+   "total_tax_2020": 73798179,
+   "total_tax_2021": 73679184,
+   "share_increase": 0.8799,
+   "share_decrease": 0.1035
+  },
+  {
+   "ward": 3,
+   "properties": 13276,
+   "median_tax_2020": 2591,
+   "median_tax_2021": 2635,
+   "median_dollar_change": 40,
+   "median_percent_change": 1.7,
+   "median_assessment": 214000,
+   "total_tax_2020": 60351958,
+   "total_tax_2021": 60254373,
+   "share_increase": 0.908,
+   "share_decrease": 0.0823
+  },
+  {
+   "ward": 4,
+   "properties": 14344,
+   "median_tax_2020": 2805,
+   "median_tax_2021": 2852,
+   "median_dollar_change": 44,
+   "median_percent_change": 1.7,
+   "median_assessment": 233000,
+   "total_tax_2020": 74616619,
+   "total_tax_2021": 74152711,
+   "share_increase": 0.9416,
+   "share_decrease": 0.0538
+  },
+  {
+   "ward": 5,
+   "properties": 11893,
+   "median_tax_2020": 3769,
+   "median_tax_2021": 3831,
+   "median_dollar_change": 60,
+   "median_percent_change": 1.7,
+   "median_assessment": 325000,
+   "total_tax_2020": 83169986,
+   "total_tax_2021": 83133593,
+   "share_increase": 0.9569,
+   "share_decrease": 0.0379
+  },
+  {
+   "ward": 6,
+   "properties": 12296,
+   "median_tax_2020": 3810,
+   "median_tax_2021": 3873,
+   "median_dollar_change": 63,
+   "median_percent_change": 1.7,
+   "median_assessment": 319000,
+   "total_tax_2020": 69064808,
+   "total_tax_2021": 69379266,
+   "share_increase": 0.9557,
+   "share_decrease": 0.0411
+  },
+  {
+   "ward": 7,
+   "properties": 13722,
+   "median_tax_2020": 3673,
+   "median_tax_2021": 3734,
+   "median_dollar_change": 61,
+   "median_percent_change": 1.7,
+   "median_assessment": 308000,
+   "total_tax_2020": 84608868,
+   "total_tax_2021": 85097877,
+   "share_increase": 0.9758,
+   "share_decrease": 0.0184
+  },
+  {
+   "ward": 8,
+   "properties": 11136,
+   "median_tax_2020": 4089,
+   "median_tax_2021": 4157,
+   "median_dollar_change": 68,
+   "median_percent_change": 1.7,
+   "median_assessment": 343000,
+   "total_tax_2020": 65939816,
+   "total_tax_2021": 66437614,
+   "share_increase": 0.9756,
+   "share_decrease": 0.0216
+  },
+  {
+   "ward": 9,
+   "properties": 11623,
+   "median_tax_2020": 4150,
+   "median_tax_2021": 4217,
+   "median_dollar_change": 66,
+   "median_percent_change": 1.6,
+   "median_assessment": 384000,
+   "total_tax_2020": 64594805,
+   "total_tax_2021": 65103631,
+   "share_increase": 0.9886,
+   "share_decrease": 0.0108
+  },
+  {
+   "ward": 10,
+   "properties": 14711,
+   "median_tax_2020": 4106,
+   "median_tax_2021": 4236,
+   "median_dollar_change": 72,
+   "median_percent_change": 1.6,
+   "median_assessment": 381000,
+   "total_tax_2020": 99121777,
+   "total_tax_2021": 100538417,
+   "share_increase": 0.9649,
+   "share_decrease": 0.0346
+  },
+  {
+   "ward": 11,
+   "properties": 10289,
+   "median_tax_2020": 4000,
+   "median_tax_2021": 4097,
+   "median_dollar_change": 91,
+   "median_percent_change": 2.6,
+   "median_assessment": 400000,
+   "total_tax_2020": 53874784,
+   "total_tax_2021": 54944043,
+   "share_increase": 0.9886,
+   "share_decrease": 0.0102
+  },
+  {
+   "ward": 12,
+   "properties": 16386,
+   "median_tax_2020": 5580,
+   "median_tax_2021": 5678,
+   "median_dollar_change": 103,
+   "median_percent_change": 1.8,
+   "median_assessment": 527000,
+   "total_tax_2020": 120259136,
+   "total_tax_2021": 121318854,
+   "share_increase": 0.9779,
+   "share_decrease": 0.0209
+  },
+  {
+   "ward": 13,
+   "properties": 12110,
+   "median_tax_2020": 4787,
+   "median_tax_2021": 4888,
+   "median_dollar_change": 88,
+   "median_percent_change": 1.7,
+   "median_assessment": 462000,
+   "total_tax_2020": 75494278,
+   "total_tax_2021": 76385786,
+   "share_increase": 0.9652,
+   "share_decrease": 0.0307
+  },
+  {
+   "ward": 14,
+   "properties": 9803,
+   "median_tax_2020": 4362,
+   "median_tax_2021": 4435,
+   "median_dollar_change": 73,
+   "median_percent_change": 1.7,
+   "median_assessment": 367000,
+   "total_tax_2020": 54377167,
+   "total_tax_2021": 55093955,
+   "share_increase": 0.9957,
+   "share_decrease": 0.0035
+  },
+  {
+   "ward": 15,
+   "properties": 10629,
+   "median_tax_2020": 5500,
+   "median_tax_2021": 5585,
+   "median_dollar_change": 74,
+   "median_percent_change": 1.3,
+   "median_assessment": 522000,
+   "total_tax_2020": 75439469,
+   "total_tax_2021": 75971708,
+   "share_increase": 0.9731,
+   "share_decrease": 0.0262
+  }
+ ],
+ "histogram": [
+  {
+   "from": -5.0,
+   "to": -4.5,
+   "count": 450
+  },
+  {
+   "from": -4.5,
+   "to": -4.0,
+   "count": 23
+  },
+  {
+   "from": -4.0,
+   "to": -3.5,
+   "count": 16
+  },
+  {
+   "from": -3.5,
+   "to": -3.0,
+   "count": 22
+  },
+  {
+   "from": -3.0,
+   "to": -2.5,
+   "count": 388
+  },
+  {
+   "from": -2.5,
+   "to": -2.0,
+   "count": 789
+  },
+  {
+   "from": -2.0,
+   "to": -1.5,
+   "count": 3272
+  },
+  {
+   "from": -1.5,
+   "to": -1.0,
+   "count": 733
+  },
+  {
+   "from": -1.0,
+   "to": -0.5,
+   "count": 390
+  },
+  {
+   "from": -0.5,
+   "to": 0.0,
+   "count": 289
+  },
+  {
+   "from": 0,
+   "to": 0,
+   "count": 738
+  },
+  {
+   "from": 0.0,
+   "to": 0.5,
+   "count": 158
+  },
+  {
+   "from": 0.5,
+   "to": 1.0,
+   "count": 134
+  },
+  {
+   "from": 1.0,
+   "to": 1.5,
+   "count": 19661
+  },
+  {
+   "from": 1.5,
+   "to": 2.0,
+   "count": 131583
+  },
+  {
+   "from": 2.0,
+   "to": 2.5,
+   "count": 3318
+  },
+  {
+   "from": 2.5,
+   "to": 3.0,
+   "count": 13872
+  },
+  {
+   "from": 3.0,
+   "to": 3.5,
+   "count": 18
+  },
+  {
+   "from": 3.5,
+   "to": 4.0,
+   "count": 8
+  },
+  {
+   "from": 4.0,
+   "to": 4.5,
+   "count": 10
+  },
+  {
+   "from": 4.5,
+   "to": 5.0,
+   "count": 5
+  },
+  {
+   "from": 5.0,
+   "to": 5.5,
+   "count": 7
+  },
+  {
+   "from": 5.5,
+   "to": 6.0,
+   "count": 5
+  },
+  {
+   "from": 6.0,
+   "to": 6.5,
+   "count": 24
+  },
+  {
+   "from": 6.5,
+   "to": 7.0,
+   "count": 4602
+  },
+  {
+   "from": 7.0,
+   "to": 7.5,
+   "count": 346
+  },
+  {
+   "from": 7.5,
+   "to": 8.0,
+   "count": 47
+  }
+ ],
+ "assessment_changed": false
+}

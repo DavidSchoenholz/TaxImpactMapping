@@ -1,0 +1,172 @@
+/* =====================================================================
+   COLOURS — safe to edit
+   =====================================================================
+   Each line is  --name: colour;   Colours are hex codes (#rrggbb).
+   Pick new ones at https://htmlcolorcodes.com and paste them in.
+   The first block is light mode, the second is dark mode
+   (used automatically when the visitor's device is set to dark).
+   ===================================================================== */
+:root {
+  --page-bg:        #f9f9f7;   /* page background */
+  --card-bg:        #fcfcfb;   /* boxes / chart background */
+  --text:           #0b0b0b;   /* main text */
+  --text-soft:      #52514e;   /* secondary text */
+  --text-muted:     #898781;   /* axis labels, small print */
+  --line:           #e1e0d9;   /* gridlines and borders */
+  --accent:         #2a78d6;   /* headline colour, ward bars, links */
+  --increase:       #e34948;   /* bars for tax going up */
+  --decrease:       #2a78d6;   /* bars for tax going down */
+  --no-change:      #c3c2b7;   /* bars for no change */
+  --highlight:      #eb6834;   /* the selected ward / looked-up property */
+
+  /* Map colour steps, lightest (low) to darkest (high). Use 7 values. */
+  --map-1: #cde2fb;
+  --map-2: #9ec5f4;
+  --map-3: #6da7ec;
+  --map-4: #3987e5;
+  --map-5: #256abf;
+  --map-6: #184f95;
+  --map-7: #0d366b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg:    #0d0d0d;
+    --card-bg:    #1a1a19;
+    --text:       #f0efec;
+    --text-soft:  #c3c2b7;
+    --text-muted: #898781;
+    --line:       #2c2c2a;
+    --accent:     #3987e5;
+    --increase:   #e66767;
+    --decrease:   #3987e5;
+    --no-change:  #52514e;
+    --highlight:  #d95926;
+  }
+}
+
+/* =====================================================================
+   LAYOUT — you normally don't need to change anything below
+   ===================================================================== */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: var(--accent); }
+
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+
+header { padding: 40px 0 8px; }
+header h1 { margin: 0 0 8px; font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.15; }
+header p { margin: 0; color: var(--text-soft); max-width: 65ch; }
+
+section { margin: 32px 0; }
+section > h2 { font-size: 1.25rem; margin: 0 0 4px; }
+section > .lede { margin: 0 0 16px; color: var(--text-soft); max-width: 70ch; }
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+/* Headline numbers */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.stat .label { color: var(--text-soft); font-size: 0.9rem; }
+.stat .value { font-size: 2rem; font-weight: 650; line-height: 1.2; margin: 4px 0; }
+.stat .sub { color: var(--text-muted); font-size: 0.85rem; }
+
+/* Controls */
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+.controls label { color: var(--text-soft); font-size: 0.9rem; }
+select, input[type="search"] {
+  font: inherit;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+input[type="search"] { width: 100%; max-width: 480px; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+
+.chart-box { position: relative; height: 380px; }
+.chart-box.short { height: 300px; }
+.chart-box.tall { height: 520px; }
+
+/* Map */
+#map { height: 520px; border-radius: 8px; }
+.map-placeholder {
+  height: 320px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--text-soft);
+  border: 2px dashed var(--line);
+  border-radius: 8px;
+  padding: 24px;
+}
+.legend {
+  background: var(--card-bg);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+.legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; }
+
+/* Lookup */
+.results { margin-top: 12px; }
+.result {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+.result:hover, .result:focus { background: color-mix(in srgb, var(--accent) 8%, transparent); outline: none; }
+.result .addr { font-weight: 600; }
+.result .meta { color: var(--text-muted); font-size: 0.85rem; }
+.result .delta { text-align: right; font-variant-numeric: tabular-nums; }
+.up { color: var(--increase); }
+.down { color: var(--decrease); }
+
+.detail { margin-top: 16px; }
+.detail h3 { margin: 0 0 8px; }
+.detail dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
+.detail dt { color: var(--text-soft); }
+.detail dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* Tables */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--text-soft); font-weight: 600; cursor: pointer; user-select: none; }
+th[aria-sort="ascending"]::after { content: " ▲"; }
+th[aria-sort="descending"]::after { content: " ▼"; }
+tr.selected td { background: color-mix(in srgb, var(--highlight) 14%, transparent); }
+
+.note { color: var(--text-muted); font-size: 0.85rem; }
+
+footer { padding: 24px 0 48px; color: var(--text-muted); font-size: 0.85rem; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}

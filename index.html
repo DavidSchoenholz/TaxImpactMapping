@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hamilton Tax Impact</title>
+  <meta name="description" content="How 2021 property tax bills changed across Hamilton's wards.">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 id="title">Property Tax Impact</h1>
+      <p id="subtitle"></p>
+    </header>
+
+    <!-- Headline numbers -->
+    <section aria-labelledby="h-overview">
+      <h2 id="h-overview" class="visually-hidden">Overview</h2>
+      <div class="stats" id="stats"></div>
+      <p class="note" id="assessment-note"></p>
+    </section>
+
+    <!-- Ward comparison: chart + map share the same measure -->
+    <section aria-labelledby="h-wards">
+      <h2 id="h-wards">Ward by ward</h2>
+      <p class="lede">Pick a measure. "Typical" means the median: half of properties are above it, half below. Click a ward to highlight it everywhere on the page.</p>
+      <div class="controls">
+        <label for="metric">Show</label>
+        <select id="metric"></select>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="chart-box tall"><canvas id="ward-chart" aria-label="Bar chart of the selected measure by ward" role="img"></canvas></div>
+        </div>
+        <div class="card">
+          <div id="map-slot"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Distribution -->
+    <section aria-labelledby="h-dist">
+      <h2 id="h-dist">How big were the changes?</h2>
+      <p class="lede" id="dist-lede">Number of properties by percent change in tax bill. Red bars are increases, blue bars are decreases.</p>
+      <div class="card">
+        <div class="chart-box short"><canvas id="dist-chart" aria-label="Histogram of percent change in tax bills" role="img"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Lookup -->
+    <section aria-labelledby="h-lookup">
+      <h2 id="h-lookup">Look up a property</h2>
+      <p class="lede">Type a street address (for example <em>123 MAIN ST</em>) or a roll number.</p>
+      <div class="card">
+        <input type="search" id="search" placeholder="Start typing an address…" autocomplete="off" aria-describedby="search-status">
+        <p class="note" id="search-status"></p>
+        <div class="detail" id="detail" hidden></div>
+        <div class="results" id="results" role="listbox"></div>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section aria-labelledby="h-table">
+      <h2 id="h-table">All wards</h2>
+      <p class="lede">Click a column heading to sort.</p>
+      <div class="card table-scroll">
+        <table id="ward-table"></table>
+      </div>
+    </section>
+
+    <footer>
+      <p id="source"></p>
+      <p id="data-notes"></p>
+    </footer>
+  </div>
+
+  <script src="vendor/chartjs/chart.umd.js"></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
