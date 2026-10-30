@@ -2,15 +2,17 @@
 
 A one-page website that shows how 2021 property tax bills changed from 2020 across Hamilton's 15 wards. The data covers about 186,000 properties.
 
-The page tells a story in five parts:
+The page is built around six questions a reader would ask, each with a short answer up front and the evidence under it:
 
 - **Lookup (top of the page):** type an address and get a "receipt": your change in dollars and percent, which group of properties you fall in, and where you rank. The result has a shareable link (`#p=<roll number>`).
-- **1 · The headline:** almost every bill rose, yet the city's total tax only rose 0.65%.
-- **2 · Who paid less:** businesses did. 87% of commercial and 98% of industrial properties got a cut (the education part of the business tax rate fell), against 0.4% of residential ones.
-- **3 · Five groups:** a histogram showing that bills changed in distinct blocks (for example about 5,000 homes, 85% in the former Stoney Creek, that rose about 6.8%). The blocks follow the old municipal borders, not property class.
-- **4 · Explore:** a large map you can colour by % change, $ change, 2021 bill or "paid less", with a ranked ward list and a sortable table.
-- **5 · The extremes:** the five biggest dollar increases and decreases.
-- **6 · Zoom out:** announced and observed residential increases 2012-2026, and tax rates by class since 2020.
+- **1 · Taxes went up about 2%. Is that what happened?** For most homes yes (+1.7%), but the city's total only rose 0.65%.
+- **2 · Did businesses get a break at homeowners' expense?** They got a break ($9.3M, a provincial education-tax cut), but it didn't move City levy onto homes.
+- **3 · Why did some neighbourhoods see 7%?** Homes fall into area rate tiers; about 4,750 homes in eastern Stoney Creek and north-west Glanbrook moved up a tier.
+- **4 · If the rate rose 2.5%, why did bills rise 1.7%?** The city-wide rate is only about 76% of a home's bill; a step-by-step breakdown for a typical home.
+- **Explore:** a large map you can colour by % change, $ change, 2021 bill or "paid less", with a ranked ward list and a sortable table.
+- **5 · Who is quietly paying more each year?** Homeowners, through tax-ratio cuts for apartments and industry: $1.1M in 2021, $14.1M a year by 2025.
+- **6 · Was 2021 a normal year?** No: the smallest increase since 2016, before 5.6-5.85% years in 2023-2025.
+- **The extremes** and **Questions only the City can answer** close the page.
 
 The story numbers come from `data/story.json` and `data/classes.json`. Rebuild them with `python scripts/build_story.py` (after `scripts/build_data.py`). It reads the files in `data/source/`.
 

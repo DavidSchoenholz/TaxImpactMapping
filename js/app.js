@@ -80,8 +80,12 @@ async function init() {
   renderParadox();
   renderLess();
   renderClusters();
+  renderTiers();
+  renderBridge();
+  renderRatios();
   renderExtremes();
   renderHistory();
+  renderOpenQuestions();
   renderTable();
   initLookup();
   state.mapReady = initMap();
@@ -101,7 +105,7 @@ async function init() {
 
   // Redraw in the right colours when the device switches light/dark.
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-    renderLess(); renderClusters(); renderHistory();
+    renderLess(); renderClusters(); renderRatios(); renderHistory();
     if (state.mapLayer) { styleMap(); restyleParcels(); }
   });
 
@@ -130,10 +134,12 @@ function renderParadox() {
   const c = state.summary.city, t = state.story.totals;
   const y0 = CONFIG.yearBefore, y1 = CONFIG.yearAfter;
 
-  $("h-paradox").textContent = "Almost every bill rose. The city's total barely did.";
+  $("paradox-answer").innerHTML =
+    `<strong>Short answer:</strong> for most homes, yes. The median bill rose ${fmtSignedPercent(c.median_percent_change)} (${fmtSignedDollars(c.median_dollar_change)}). ` +
+    `For the city as a whole, no: total tax billed rose just ${t.net_pct.toFixed(2)}%, because about ${fmtCount(Math.round(t.n_less / 100) * 100)} properties, most of them businesses, paid less.`;
   $("paradox-lede").textContent =
-    `${fmtShare(c.share_increase)} of properties paid more in ${y1}, yet ${CONFIG.cityName} collected only ` +
-    `${t.net_pct.toFixed(2)}% more in total. The gap comes down to a few thousand businesses whose bills fell.`;
+    `${fmtShare(c.share_increase)} of properties paid more in ${y1}, so where did the difference go? ` +
+    `The ${fmtCount(t.n_more)} properties that paid more added ${fmtMoneyShort(t.increase_total)}; the ${fmtCount(t.n_less)} that paid less took ${fmtMoneyShort(-t.decrease_total)} back off.`;
 
   const tiles = [
     { num: fmtShare(c.share_increase), what: "of properties paid more", more: `${fmtCount(t.n_more)} of ${fmtCount(t.n_taxed)} taxed properties` },
@@ -174,13 +180,29 @@ function renderLess() {
   const edu = (c) => `${(c.education_2020 * 100).toFixed(2)}% to ${(c.education_2021 * 100).toFixed(2)}%`;
   const muniRise = (c) => ((c.municipal_2021 / c.municipal_2020 - 1) * 100).toFixed(0);
 
-  $("h-less").textContent = "Businesses paid less. Homes paid more.";
+  const eduTotal = st.education_cut.reduce((sum, e) => sum + e.saving, 0);
+  $("less-answer").innerHTML =
+    `<strong>Short answer:</strong> businesses got a break in ${CONFIG.yearAfter}, but homeowners didn't pay for it that year. ` +
+    `The break was a provincial cut to the education tax on businesses, worth ${fmtMoneyShort(eduTotal)}. ` +
+    `Education tax goes to the province for schools, so the City collected the same either way. The real shift onto homes is slower, and it's in <a href="#q5">Question 5</a>.`;
   $("less-lede").textContent =
     `${fmtShare(com.share_less)} of commercial and ${fmtShare(ind.share_less)} of industrial properties got a cut, against ${fmtShare(res.share_less)} of residential ones. ` +
-    `The reason is in the tax rates: the education part of the business rate fell in ${CONFIG.yearAfter} ` +
-    `(commercial ${edu(rc.CT)} of assessed value, industrial ${edu(rc.IT)}), while the City's own part rose about ${muniRise(rc.CT)}%. ` +
-    `Residential rates rose ${rc.RT.total_change_pct}%, though typical residential bills rose ${fmtPercent(res.median_pct)}: the city-wide rate is only about three quarters of a home's bill, and the area-specific part held flat. ` +
-    `The education cut lowered business bills but did not move City levy onto homes, because education tax goes to the province.`;
+    `The City's own rate on businesses still rose (about ${muniRise(rc.CT)}% for commercial), but the education rate fell further ` +
+    `(commercial ${edu(rc.CT)} of assessed value, industrial ${edu(rc.IT)}), so the total went down.`;
+
+  const pct = (v) => (v * 100).toFixed(3).replace(/0$/, "") + "%";
+  $("edu-lede").textContent =
+    `On top of the City's part, every bill carries an education part set by the province. In ${CONFIG.yearAfter} the province cut the education rate on business classes to ${pct(rc.CT.education_2021)}. ` +
+    `Homes stayed at ${pct(rc.RT.education_2021)}.`;
+  $("edu-table").innerHTML =
+    `<thead><tr><th>Class</th><th>Education rate ${CONFIG.yearBefore}</th><th>Education rate ${CONFIG.yearAfter}</th><th>Saved in ${CONFIG.yearAfter}</th></tr></thead><tbody>` +
+    st.education_cut.map((e) => `<tr><td>${escapeHtml(e.group)}</td><td>${pct(e.rate_2020)}</td><td>${pct(e.rate_2021)}</td><td>${fmtMoneyShort(e.saving)}</td></tr>`).join("") +
+    `<tr><td>Residential</td><td>${pct(rc.RT.education_2020)}</td><td>${pct(rc.RT.education_2021)}</td><td>$0</td></tr></tbody>` +
+    `<tfoot><tr><td><strong>Total</strong></td><td></td><td></td><td><strong>${fmtMoneyShort(eduTotal)}</strong></td></tr></tfoot>`;
+  $("less-callout").textContent =
+    `A common reading of ${CONFIG.yearAfter} is "businesses got a tax cut and homeowners covered it." The numbers don't support that. ` +
+    `Without the education cut, business bills would have been about ${fmtMoneyShort(eduTotal)} higher, and home bills would have been exactly the same. ` +
+    `Saved in ${CONFIG.yearAfter} = ${CONFIG.yearAfter} assessed value × the drop in education rate, from the City's levy by-laws.`;
   $("class-title").textContent = "Typical % change in tax bill, by property class";
 
   const shown = ["residential", "multi", "commercial", "industrial", "farm"].map((k) => cls[k]);
@@ -264,17 +286,15 @@ function wardPhrase(g) {
 function renderClusters() {
   const st = state.story;
   const typical = st.groups.find((g) => g.key === "typical");
+  const moved = st.tiers.filter((t) => t.moved);
+  const movedN = moved.reduce((sum, t) => sum + t.n, 0);
+  $("clusters-answer").innerHTML =
+    `<strong>Short answer:</strong> tax rates differ by area, and about ${fmtCount(Math.round(movedN / 50) * 50)} homes were moved up to a higher area rate in ${CONFIG.yearAfter}. ` +
+    `Within each area, every home got the same percentage increase, whatever its value. Where you lived mattered more than what your house was worth.`;
   $("clusters-lede").textContent =
     `Line up every property by how much its bill changed and you don't get a smooth bell shape. You get stacks. ` +
     `${fmtShare(typical.share)} of bills landed between ${typical.lo}% and ${typical.hi}%, and the rest clumped in distinct blocks, ` +
     `each tied to particular parts of the city.`;
-
-  const jump = st.groups.find((g) => g.key === "jump");
-  const jumpClass = jump.class_mix[0];
-  $("clusters-callout").textContent =
-    `The blocks follow the old municipal borders, not property type. The big-jump block is ${Math.round(jumpClass[1] / jump.n * 100)}% ${classLabel(jumpClass[0]).toLowerCase()} and ` +
-    `${Math.round(jump.top_munis[0][1] / jump.n * 100)}% in ${muniPhrase(jump.top_munis[0][0])}, while homes in the old City of Hamilton almost all got the standard rise. ` +
-    `That points to area-specific rates. The files don't say which, so the City's budget documents are the place to look.`;
 
   const colourFor = (from) => {
     const mid = from + 0.05;
@@ -336,7 +356,147 @@ async function showGroupOnMap(g) {
   $("explore").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// ---------- 5. extremes ------------------------------------------------
+// ---------- 3b. effective-rate tiers ------------------------------------
+
+function renderTiers() {
+  const st = state.story;
+  const tiers = [...st.tiers].sort((a, b) => (a.moved - b.moved) || (b.rate_2021 - a.rate_2021));
+  const lo = 0.95, hi = 1.25, at = (v) => ((v - lo) / (hi - lo)) * 100;
+  $("tiers-lede").textContent =
+    `Divide a bill by the home's assessed value and you get the rate it pays. Part of that rate is the same city-wide; ` +
+    `part is set by area, for services the City charges by area. Homes fall into a handful of these area tiers. ` +
+    `Each line runs from a tier's ${CONFIG.yearBefore} rate (hollow dot) to its ${CONFIG.yearAfter} rate. Click a tier to see it on the map.`;
+  $("tiers").innerHTML =
+    `<div class="tier-scale" aria-hidden="true">${[1.0, 1.1, 1.2].map((v) => `<span style="left:${at(v)}%">${v.toFixed(1)}%</span>`).join("")}</div>` +
+    tiers.map((t, i) => `
+    <button type="button" class="tier${t.moved ? " moved" : ""}" data-i="${i}">
+      <span class="tier-name">${escapeHtml(t.name)}<small>${fmtCount(t.n)} homes${t.moved ? " · moved up a tier" : ""}</small></span>
+      <span class="tier-track">
+        <span class="tier-line" style="left:${at(Math.min(t.rate_2020, t.rate_2021))}%;width:${Math.abs(at(t.rate_2021) - at(t.rate_2020))}%"></span>
+        <span class="tier-dot from" style="left:${at(t.rate_2020)}%" title="${CONFIG.yearBefore}: ${t.rate_2020.toFixed(3)}%"></span>
+        <span class="tier-dot to" style="left:${at(t.rate_2021)}%" title="${CONFIG.yearAfter}: ${t.rate_2021.toFixed(3)}%"></span>
+      </span>
+      <span class="tier-val"><strong>${fmtSignedPercent(t.pct)}</strong><small>${fmtSignedDollars(t.median_change)} typical</small></span>
+    </button>`).join("");
+  $("tiers").querySelectorAll(".tier").forEach((el) => el.addEventListener("click", () => {
+    const t = tiers[Number(el.dataset.i)];
+    setMeasure("pct");
+    if (t.center) showOnMap(t.center[0], t.center[1], t.name);
+  }));
+
+  const sc = tiers.find((t) => t.key === "1.04-1.11");
+  const scUrban = tiers.find((t) => t.key === "1.09-1.11");
+  const wd = tiers.find((t) => t.key === "1.09-1.1");
+  const others = tiers.filter((t) => !t.moved && t !== wd);
+  const wdDrop = wd.area_2020 - wd.area_2021;
+  const maxOtherDrop = Math.max(...others.map((t) => t.area_2020 - t.area_2021));
+  $("clusters-callout").innerHTML =
+    `<strong>What happened in eastern Stoney Creek?</strong> Its ${fmtCount(sc.n)} homes went from a ${sc.rate_2020.toFixed(3)}% rate to ${sc.rate_2021.toFixed(3)}%, ` +
+    `${Math.abs(sc.rate_2021 - scUrban.rate_2021) < 0.001 ? "exactly the rate the rest of urban Stoney Creek already paid" : "close to the rest of urban Stoney Creek"}. ` +
+    `They paid ${fmtMoneyShort(sc.total_change)} more in ${CONFIG.yearAfter}, about ${fmtMoneyShort(sc.above_standard)} more than the standard rise would have cost. ` +
+    `Joining the neighbours' rate, rather than getting a new one, looks like an urban service area being extended to them. The data can't say which service.` +
+    `<br><br><strong>And Waterdown?</strong> The mirror image. Its area-specific rate fell ${wdDrop.toFixed(3)} points` +
+    `${wdDrop > maxOtherDrop ? ", more than any other area's" : ""}, so its homes saw the smallest increase of any tier (${fmtSignedPercent(wd.pct)}).`;
+}
+
+// ---------- 4. rate vs bill -----------------------------------------------
+
+function renderBridge() {
+  const b = state.story.bridge;
+  const y0 = CONFIG.yearBefore, y1 = CONFIG.yearAfter;
+  const shareMuni = b.share_citywide - b.share_education;
+  $("bridge-answer").innerHTML =
+    `<strong>Short answer:</strong> the ${b.rate_change_total}% is the change in the city-wide rate, and that is only about ${Math.round(b.share_citywide * 100)}% of a typical home's bill. ` +
+    `The rest is an area-specific part, which didn't go up, and the education part, which didn't change.`;
+  $("bridge-lede").textContent = `Here is a typical home in the old City of Hamilton, assessed at ${fmtDollars(b.assessment)} (the value has been frozen since 2016).`;
+  const steps = [
+    { label: "City-wide municipal rate", v: b.citywide_municipal, note: `rose ${b.rate_change_municipal}%` },
+    { label: "Area-specific rate", v: b.area_specific, note: "fell slightly" },
+    { label: "Education rate", v: b.education, note: "unchanged" },
+  ];
+  const max = Math.max(...steps.map((x) => Math.abs(x.v))) || 1;
+  const pctOf = (v) => fmtSignedPercent((v / b.bill_2020) * 100);
+  $("bridge").innerHTML = `
+    <h3 class="chart-title">What makes up the ${y0} bill</h3>
+    <div class="compose" role="img" aria-label="Bill composition">
+      <span class="seg-muni" style="width:${shareMuni * 100}%">City-wide municipal ${Math.round(shareMuni * 100)}%</span>
+      <span class="seg-area" style="width:${b.share_area * 100}%">Area-specific ${Math.round(b.share_area * 100)}%</span>
+      <span class="seg-edu" style="width:${b.share_education * 100}%">Education ${Math.round(b.share_education * 100)}%</span>
+    </div>
+    <h3 class="chart-title" style="margin-top:22px">How it changed</h3>
+    <div class="steps">
+      <div class="step total"><span>${y0} bill</span><span></span><strong>${fmtDollars(b.bill_2020)}</strong></div>
+      ${steps.map((x) => `<div class="step"><span>${x.label}<small>${x.note}</small></span>
+        <span class="step-track"><span class="step-bar ${x.v > 0 ? "up" : x.v < 0 ? "down" : ""}" style="width:${Math.max(x.v ? 4 : 0, Math.abs(x.v) / max * 100)}%"></span></span>
+        <strong>${fmtSignedDollars(x.v)} <small>${pctOf(x.v)}</small></strong></div>`).join("")}
+      <div class="step total"><span>${y1} bill</span><span></span><strong>${fmtDollars(b.bill_2021)} <small>${pctOf(b.bill_2021 - b.bill_2020)}</small></strong></div>
+    </div>`;
+  const ann = state.story.annual.find((a) => a.year === CONFIG.yearAfter);
+  $("bridge-callout").innerHTML =
+    `<strong>So which number is "the" increase?</strong> The City-wide municipal rate rose ${b.rate_change_municipal}% (council's decision). ` +
+    `The total city-wide rate rose ${b.rate_change_total}%. A real bill rose ${fmtSignedPercent(state.summary.city.median_percent_change)}. ` +
+    `The figure reported at budget time was ${ann.announced}%, which matches none of them. Each answers a different question; only the bill is what people actually paid.`;
+}
+
+// ---------- 5. tax ratios -------------------------------------------------
+
+function renderRatios() {
+  const st = state.story, eff = st.ratio_effect, last = eff.at(-1), first = eff.at(0);
+  const r0 = st.ratios.at(0), rN = st.ratios.at(-1);
+  $("ratio-answer").innerHTML =
+    `<strong>Short answer:</strong> homeowners, through tax ratios. Since ${CONFIG.yearAfter} council has steadily lowered what apartment buildings and industry pay compared with homes. ` +
+    `In ${first.year} that moved ${fmtMoneyShort(first.residential)} onto homes. By ${last.year} it was moving ${fmtMoneyShort(last.residential)} a year, about ${last.residential_rate_pct.toFixed(1)}% of the residential rate.`;
+  $("ratio-lede").textContent =
+    `A tax ratio says how many times more a class pays per dollar of value than a home. Lowering a ratio doesn't change how much the City collects; it changes who pays it. ` +
+    `To measure the effect, each year's city-wide levy is spread again using the ${r0.year} ratios and compared with what homes actually paid.`;
+  $("ratio-title").textContent = `Extra paid by homes because of ratio changes since ${r0.year}, $M a year`;
+  makeChart("ratio", $("ratio-chart"), {
+    type: "bar",
+    data: {
+      labels: eff.map((e) => e.year),
+      datasets: [{ data: eff.map((e) => e.residential / 1e6), backgroundColor: css("--increase"), borderRadius: 4 }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (it) => { const e = eff.at(it.dataIndex); return [`${fmtMoneyShort(e.residential)} extra on homes (${e.residential_rate_pct}% of the residential rate)`, `Apartment buildings: ${fmtMoneyShort(e.multi)}`, `Industry: ${fmtMoneyShort(e.industrial)}`]; } } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: css("--text-muted") } },
+        y: { beginAtZero: true, grid: { color: css("--line") }, ticks: { color: css("--text-muted"), callback: (v) => "$" + v + "M" } },
+      },
+    },
+  });
+  const cols = [["MT", "Apartments"], ["IT", "Industrial"], ["LT", "Large industrial"], ["CT", "Commercial"]];
+  const val = (r, c) => (c === "MT" ? r.MT : c === "IT" ? r.IT : c === "LT" ? r.LT : r.CT);
+  $("ratio-table").innerHTML =
+    `<thead><tr><th>Year</th>${cols.map(([, l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>` +
+    st.ratios.map((r) => `<tr><td>${r.year}</td>${cols.map(([c]) => `<td>${val(r, c).toFixed(2)}</td>`).join("")}</tr>`).join("") + `</tbody>`;
+  $("ratio-note").textContent =
+    `Homes = 1.00. The apartment ratio fell from ${r0.MT.toFixed(2)} to ${rN.MT.toFixed(2)} in five even steps, which looks like a planned path. ` +
+    `In ${last.year} the change saved apartment buildings ${fmtMoneyShort(-last.multi)} and industry ${fmtMoneyShort(-last.industrial)}. ` +
+    `A common argument for lowering the apartment ratio is that apartment taxes are passed on to tenants in rent. Whatever the merits, this cost to homeowners never appears in the increase announced each year.`;
+}
+
+// ---------- open questions ---------------------------------------------
+
+function renderOpenQuestions() {
+  const st = state.story, moved = st.tiers.filter((t) => t.moved);
+  const movedN = moved.reduce((sum, t) => sum + t.n, 0);
+  const ann = st.annual.find((a) => a.year === CONFIG.yearAfter);
+  const qs = [
+    `Which area-rated services changed their boundaries in eastern Stoney Creek and north-west Glanbrook for ${CONFIG.yearAfter}? Were the ${fmtCount(movedN)} affected homes told before the bill arrived, and was a phase-in considered?`,
+    `Why did Waterdown's area-specific rate fall more than any other area's?`,
+    `How is the announced average increase (${ann.announced}% for ${CONFIG.yearAfter}) calculated? It matches neither the rate change nor the bills.`,
+    `Why do ${fmtCount(st.checks.multi_zero)} of ${fmtCount(st.checks.multi_n)} apartment buildings show exactly 0.0% change, when their class rate rose about 1%?`,
+    `The levy by-law's commercial and industrial assessment jumped in 2023, even though property values were still frozen at 2016 levels. What changed?`,
+    `Where does the tax-ratio path end, and is its cost to homeowners reported to council each year?`,
+  ];
+  $("open-qs").innerHTML = qs.map((q) => `<li>${escapeHtml(q)}</li>`).join("");
+}
+
+// ---------- extremes ------------------------------------------------
 
 function renderExtremes() {
   const list = (id, rows) => {
@@ -365,11 +525,20 @@ function renderHistory() {
   const idx = st.rate_index;
   const at = (code, year) => (idx[code].find((p) => p[0] === year) || [])[1];
 
-  $("h-history").textContent = `${CONFIG.yearAfter} was a gentle year. The next few were not.`;
+  const obs = ann.filter((a) => a.observed != null);
+  const thisObs = obs.find((a) => a.year === CONFIG.yearAfter);
+  const lowerSince = obs.filter((a) => a.year < CONFIG.yearAfter && a.observed <= thisObs.observed).map((a) => a.year).at(-1);
+  const later = ann.filter((a) => a.year >= 2023 && a.year <= 2025 && a.announced != null).map((a) => a.announced);
+  $("history-answer").innerHTML =
+    `<strong>Short answer:</strong> no. In the City's parcel data, ${CONFIG.yearAfter} was the smallest residential increase since ${lowerSince}. ` +
+    `It was the calm before 2023 to 2025, when announced increases ran ${Math.min(...later)}% to ${Math.max(...later)}% a year.`;
+  const hp = st.home_path, h21 = hp.find((h) => h.year === CONFIG.yearAfter), hN = hp.at(-1);
+  $("home-path").innerHTML =
+    `<strong>What that means for a home.</strong> On the city-wide rate alone, the median home (assessed at ${fmtDollars(st.median_home)}) paid ${fmtDollars(h21.citywide)} in ${h21.year} ` +
+    `and ${fmtDollars(hN.citywide)} in ${hN.year} (${fmtSignedDollars(hN.citywide - h21.citywide)}, ${fmtSignedPercent((hN.citywide / h21.citywide - 1) * 100)}), with no change at all in its assessed value. ` +
+    `For a typical old-Hamilton home the full bill is estimated to go from ${fmtDollars(h21.old_hamilton_est)} to ${fmtDollars(hN.old_hamilton_est)}, holding its area-specific rate at the ${h21.year} level.`;
   $("history-lede").textContent =
-    `Council's announced residential increase was ${ann.find((a) => a.year === CONFIG.yearAfter).announced}% in ${CONFIG.yearAfter}, ` +
-    `then ${ann.filter((a) => a.year >= 2023 && a.year <= 2025).map((a) => a.announced + "%").join(", ").replace(/, ([^,]+)$/, " and $1")} for 2023 to 2025. ` +
-    `Since 2020 the residential tax rate is up ${Math.round(at("RT", 2025) - 100)}%, against ${Math.round(at("CT", 2025) - 100)}% for commercial and ${Math.round(at("IT", 2025) - 100)}% for industrial.`;
+    `The increases also stopped being shared evenly. Since 2020 the residential tax rate is up ${Math.round(at("RT", 2025) - 100)}%, against ${Math.round(at("CT", 2025) - 100)}% for commercial and ${Math.round(at("IT", 2025) - 100)}% for industrial.`;
   $("history-note").textContent =
     "Announced figures are the average residential increase reported when council adopted each budget (sources are in data/source/hamilton_annual_tax_increases.csv). " +
     "Observed figures are the median residential change in the City's parcel data, available only for years the City published a parcel layer. " +

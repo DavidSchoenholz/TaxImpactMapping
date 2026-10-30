@@ -233,6 +233,57 @@ tr.selected td { background: var(--band-bg); }
 tbody tr { cursor: pointer; }
 tfoot td { border-bottom: 0; }
 
+/* ---- question answers, toc, tiers, bridge ------------------------------ */
+.answer { font-size: 1.18rem; line-height: 1.5; max-width: 62ch; margin: 0 0 18px; padding-left: 16px; border-left: 4px solid var(--accent); }
+.answer a { font-weight: 600; }
+.sub-h { font-size: 1.5rem; margin: 48px 0 10px; }
+.explain { margin-top: 24px; }
+.explain h3 { font-size: 1.1rem; }
+.explain p { color: var(--text-soft); max-width: 70ch; }
+.toc { margin-top: 36px; border-top: 1px solid rgba(255,255,255,.15); padding-top: 18px; }
+.toc-title { text-transform: uppercase; letter-spacing: .12em; font-size: .72rem; font-weight: 700; color: #9fb2d3; margin: 0 0 10px; }
+.toc ol { margin: 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+.toc li { margin: 0 0 6px; break-inside: avoid; color: #9fb2d3; }
+.toc a { color: #e6ecf7; text-decoration: none; border-bottom: 1px solid rgba(230,236,247,.3); }
+.toc a:hover { border-bottom-color: #e6ecf7; }
+
+.tiers { position: relative; padding-top: 22px; }
+.tier-scale { position: relative; height: 18px; margin: 0 110px 0 240px; font-size: .75rem; color: var(--text-muted); }
+.tier-scale span { position: absolute; transform: translateX(-50%); }
+.tier { display: grid; grid-template-columns: 240px 1fr 110px; align-items: center; width: 100%; background: none; border: 0; border-top: 1px solid var(--line); padding: 10px 0; text-align: left; color: var(--text); cursor: pointer; font: inherit; }
+.tier:hover { background: var(--band-bg); }
+.tier-name { font-weight: 600; font-size: .95rem; padding-right: 12px; }
+.tier-name small, .tier-val small { display: block; font-weight: 400; color: var(--text-muted); font-size: .78rem; }
+.tier-track { position: relative; height: 18px; }
+.tier-line { position: absolute; top: 8px; height: 3px; background: var(--no-change); }
+.tier-dot { position: absolute; top: 3px; width: 13px; height: 13px; margin-left: -6px; border-radius: 50%; }
+.tier-dot.from { border: 2px solid var(--text-muted); background: var(--card-bg); }
+.tier-dot.to { background: var(--text-soft); }
+.tier.moved .tier-line { background: var(--highlight); }
+.tier.moved .tier-dot.to { background: var(--highlight); }
+.tier.moved .tier-val strong { color: var(--highlight); }
+.tier-val { text-align: right; }
+
+.compose { display: flex; height: 40px; border-radius: 8px; overflow: hidden; font-size: .78rem; font-weight: 600; color: #fff; }
+.compose span { display: flex; align-items: center; padding: 0 10px; white-space: nowrap; overflow: hidden; }
+.seg-muni { background: var(--accent); }
+.seg-area { background: var(--highlight); }
+.seg-edu { background: var(--text-muted); }
+.steps { display: grid; gap: 4px; }
+.step { display: grid; grid-template-columns: 220px 1fr 150px; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.step small { display: block; color: var(--text-muted); font-size: .78rem; font-weight: 400; }
+.step strong { text-align: right; font-variant-numeric: tabular-nums; }
+.step strong small { display: inline; margin-left: 6px; }
+.step.total { font-weight: 700; }
+.step-track { height: 16px; }
+.step-bar { display: block; height: 100%; border-radius: 4px; background: var(--no-change); }
+.step-bar.up { background: var(--increase); }
+.step-bar.down { background: var(--decrease); }
+
+.open-qs { max-width: 70ch; padding-left: 22px; }
+.open-qs li { margin: 0 0 14px; font-size: 1.05rem; color: var(--text-soft); }
+.explain table td, .explain table th, #ratio-table td, #ratio-table th { padding: 8px 12px; }
+
 /* ---- extremes ----------------------------------------------------------- */
 .col-title { font-size: 1.2rem; }
 .col-title.up { color: var(--increase); }
@@ -256,6 +307,12 @@ footer p { max-width: 80ch; }
   .ward-panel { max-height: none; }
 }
 @media (max-width: 600px) {
+  .toc ol { columns: 1; }
+  .tier { grid-template-columns: 1fr 90px; }
+  .tier-name { grid-column: 1 / -1; }
+  .tier-scale { margin: 0 90px 0 0; }
+  .step { grid-template-columns: 1fr 120px; }
+  .step-track, .step.total > span:nth-child(2) { display: none; }
   body { font-size: 16px; }
   .story { padding: 48px 0; }
   .hero { padding: 36px 0; }

@@ -209,7 +209,113 @@ for lst in extremes.values():
 class_lookup = {r["ROLL_NO"]: r["TAX_CLASS_PRIMARY"] or "?" for r in class_rows if r["TAX_CLASS_PRIMARY"] != "RT"}
 (ROOT / "data" / "classes.json").write_text(json.dumps({"labels": FAMILY_LABEL, "family": FAMILY, "rolls": class_lookup}, separators=(",", ":")))
 
+# ---- Levy by-law schedules: levy, education cut, tax ratios -------------
+# General city-wide rates x by-law assessment. Area-rated levies are not in
+# these schedules.
+sched = defaultdict(dict)
+for r in read_csv("hamilton_tax_rates_by_class_2020_2025.csv"):
+    sched[int(r["year"])][r["class_code"]] = {k: float(r[k]) for k in ("assessment", "municipal_rate", "education_rate", "total_citywide_rate")}
+YEARS = sorted(sched)
+muni_levy = {y: sum(c["assessment"] * c["municipal_rate"] for c in sched[y].values()) for y in YEARS}
+levy = [{"year": y, "municipal": round(muni_levy[y]), "growth_pct": round((muni_levy[y] / muni_levy[y - 1] - 1) * 100, 2) if y - 1 in muni_levy else None}
+        for y in YEARS]
+
+y0, y1 = sched[2020], sched[2021]
+EDU_GROUP = {"CT": "Commercial", "DT": "Commercial", "GT": "Commercial", "ST": "Commercial",
+             "IT": "Industrial", "LT": "Industrial", "PT": "Pipelines and landfills", "HT": "Pipelines and landfills"}
+edu = defaultdict(lambda: {"saving": 0.0, "rate_2020": None, "rate_2021": None})
+for c, grp in EDU_GROUP.items():
+    edu[grp]["saving"] += (y0[c]["education_rate"] - y1[c]["education_rate"]) * y1[c]["assessment"]
+    if c in ("CT", "IT", "PT"):
+        edu[grp]["rate_2020"], edu[grp]["rate_2021"] = y0[c]["education_rate"], y1[c]["education_rate"]
+education_cut = [{"group": g, "saving": round(v["saving"]), "rate_2020": v["rate_2020"], "rate_2021": v["rate_2021"]} for g, v in edu.items()]
+
+# Ratio = class municipal rate / residential municipal rate. The effect of
+# changing ratios: hold each year's levy fixed, re-spread it with 2020 ratios.
+ratio20 = {c: v["municipal_rate"] / y0["RT"]["municipal_rate"] for c, v in y0.items()}
+ratios, ratio_effect = [], []
+for y in YEARS:
+    s = sched[y]
+    ratios.append({"year": y, **{c: round(s[c]["municipal_rate"] / s["RT"]["municipal_rate"], 3) for c in ("MT", "CT", "IT", "LT")}})
+    if y == 2020:
+        continue
+    cf_rt = muni_levy[y] / sum(s[c]["assessment"] * ratio20.get(c, s[c]["municipal_rate"] / s["RT"]["municipal_rate"]) for c in s)
+    diff = lambda c: s[c]["assessment"] * (s[c]["municipal_rate"] - ratio20[c] * cf_rt)
+    ratio_effect.append({"year": y, "residential": round(diff("RT") + diff("NT")), "multi": round(diff("MT")),
+                         "industrial": round(diff("IT") + diff("LT")),
+                         "residential_rate_pct": round((s["RT"]["municipal_rate"] / cf_rt - 1) * 100, 2)})
+
+# ---- Effective-rate tiers for homes -------------------------------------
+# Effective rate = bill / assessment. Single-class residential homes fall into
+# a few tiers by area; the area-specific part = effective rate - city-wide rate.
+# Place names are inferred from each tier's streets, coordinates and wards.
+TIER_NAMES = {
+    "1.19-1.21": "Old City of Hamilton",
+    "1.09-1.11": "Urban Stoney Creek and Dundas",
+    "1.1-1.12": "Ancaster and Mount Hope",
+    "1.09-1.1": "Waterdown",
+    "0.99-1.01": "Rural areas and Binbrook",
+    "1.04-1.11": "Eastern Stoney Creek (Winona)",
+    "1.04-1.12": "North-west Glanbrook",
+    "0.99-1.06": "Rural Glanbrook edge",
+}
+MOVED = {"1.04-1.11", "1.04-1.12", "0.99-1.06"}
+loc = {r[2]: (r[8], r[9]) for r in rows}
+homes = [r for r in class_rows if r["TAX_CLASS_PRIMARY"] == "RT" and r["MULTI_CLASS"] == "N"
+         and float(r["ASSESSMENT_2021"] or 0) > 50000 and float(r["TOTAL_TAXES_2020"] or 0) > 0 and float(r["TOTAL_TAXES_2021"] or 0) > 0]
+by_tier = defaultdict(list)
+for r in homes:
+    e0 = float(r["TOTAL_TAXES_2020"]) / float(r["ASSESSMENT_2020"]) * 100
+    e1 = float(r["TOTAL_TAXES_2021"]) / float(r["ASSESSMENT_2021"]) * 100
+    key = f"{round(e0, 2):g}-{round(e1, 2):g}"
+    if key in TIER_NAMES:
+        by_tier[key].append((r, e0, e1))
+c20, c21 = y0["RT"]["total_citywide_rate"] * 100, y1["RT"]["total_citywide_rate"] * 100
+tiers = []
+for key, g in by_tier.items():
+    e0, e1 = st.median(x[1] for x in g), st.median(x[2] for x in g)
+    pts = [loc[x[0]["ROLL_NO"]] for x in g if loc.get(x[0]["ROLL_NO"], (None,))[0] is not None]
+    tiers.append({
+        "key": key, "name": TIER_NAMES[key], "moved": key in MOVED, "n": len(g),
+        "rate_2020": round(e0, 4), "rate_2021": round(e1, 4), "pct": round((e1 / e0 - 1) * 100, 2),
+        "area_2020": round(e0 - c20, 4), "area_2021": round(e1 - c21, 4),
+        "median_change": st.median(float(x[0]["DOLLAR_CHANGE_TAXES"]) for x in g),
+        "total_change": round(sum(float(x[0]["DOLLAR_CHANGE_TAXES"]) for x in g)),
+        "above_standard": round(sum(float(x[0]["DOLLAR_CHANGE_TAXES"]) - 0.017 * float(x[0]["TOTAL_TAXES_2020"]) for x in g)),
+        "median_assessment": st.median(float(x[0]["ASSESSMENT_2021"]) for x in g),
+        "center": [round(st.median(p[0] for p in pts), 5), round(st.median(p[1] for p in pts), 5)] if pts else None,
+    })
+tiers.sort(key=lambda t: -t["rate_2021"])
+
+# ---- A typical old-Hamilton home: why 2.5% became 1.7% -------------------
+old = next(t for t in tiers if t["key"] == "1.19-1.21")
+A = old["median_assessment"]
+m0, m1 = y0["RT"]["municipal_rate"], y1["RT"]["municipal_rate"]
+bridge = {
+    "assessment": A,
+    "bill_2020": round(A * old["rate_2020"] / 100),
+    "citywide_municipal": round(A * (m1 - m0)),
+    "area_specific": round(A * (old["area_2021"] - old["area_2020"]) / 100),
+    "education": round(A * (y1["RT"]["education_rate"] - y0["RT"]["education_rate"])),
+    "bill_2021": round(A * old["rate_2021"] / 100),
+    "share_citywide": round(c20 / old["rate_2020"], 3),
+    "share_area": round(old["area_2020"] / old["rate_2020"], 3),
+    "share_education": round(y0["RT"]["education_rate"] * 100 / old["rate_2020"], 3),
+    "rate_change_total": round((y1["RT"]["total_citywide_rate"] / y0["RT"]["total_citywide_rate"] - 1) * 100, 2),
+    "rate_change_municipal": round((m1 / m0 - 1) * 100, 2),
+}
+
+# ---- What a typical home pays on the city-wide rate, 2020-2025 -----------
+med_home = st.median(float(r["ASSESSMENT_2021"]) for r in homes)
+home_path = [{"year": y, "citywide": round(med_home * sched[y]["RT"]["total_citywide_rate"]),
+              "old_hamilton_est": round(A * (sched[y]["RT"]["total_citywide_rate"] + old["area_2021"] / 100))} for y in YEARS]
+
+mt_rows = [r for r in class_rows if r["TAX_CLASS_PRIMARY"] == "MT" and float(r["TOTAL_TAXES_2020"] or 0) > 0 and float(r["TOTAL_TAXES_2021"] or 0) > 0]
+checks = {"multi_n": len(mt_rows), "multi_zero": sum(1 for r in mt_rows if float(r["PERCENT_CHANGE_TAXES"] or 0) == 0)}
+
 out = {"classes": classes, "less_by_class": less_by_class, "rate_change_2021": rate_change_2021,
-       "rate_index": rate_index, "annual": annual, "totals": totals, "groups": groups, "deciles": deciles, "hist": hist, "extremes": extremes}
+       "rate_index": rate_index, "annual": annual, "totals": totals, "groups": groups, "deciles": deciles, "hist": hist, "extremes": extremes,
+       "levy": levy, "education_cut": education_cut, "ratios": ratios, "ratio_effect": ratio_effect, "tiers": tiers,
+       "bridge": bridge, "home_path": home_path, "median_home": med_home, "checks": checks}
 (ROOT / "data" / "story.json").write_text(json.dumps(out, separators=(",", ":")))
 print("wrote data/story.json and data/classes.json")

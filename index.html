@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hamilton Property Tax Impact, 2021</title>
-  <meta name="description" content="Most Hamilton tax bills rose about the same amount in 2021, but a small group of large bills fell. Look up your property and see the whole city on a map.">
+  <meta name="description" content="Six questions about Hamilton's 2021 property tax bills, answered with the City's own data: who paid more, who paid less, and why where you live mattered more than what your house is worth.">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -28,15 +28,28 @@
       </div>
 
       <div id="receipt" class="receipt" hidden></div>
+
+      <nav class="toc" aria-label="Questions this page answers">
+        <p class="toc-title">Six questions this page answers</p>
+        <ol>
+          <li><a href="#q1">Taxes went up about 2%. Is that what happened?</a></li>
+          <li><a href="#q2">Did businesses get a break at homeowners' expense?</a></li>
+          <li><a href="#q3">Why did some neighbourhoods see 7%?</a></li>
+          <li><a href="#q4">If the rate rose 2.5%, why did bills rise 1.7%?</a></li>
+          <li><a href="#q5">Who is quietly paying more each year?</a></li>
+          <li><a href="#q6">Was 2021 a normal year?</a></li>
+        </ol>
+      </nav>
     </div>
   </header>
 
   <main>
-    <!-- ============ 1. THE PARADOX ============ -->
-    <section class="story" aria-labelledby="h-paradox">
+    <!-- ============ Q1. THE PARADOX ============ -->
+    <section class="story" id="q1" aria-labelledby="h-paradox">
       <div class="wrap">
-        <p class="eyebrow">1 · The headline</p>
-        <h2 id="h-paradox"></h2>
+        <p class="eyebrow">Question 1</p>
+        <h2 id="h-paradox">Taxes went up about 2% in 2021. Is that what happened?</h2>
+        <p class="answer" id="paradox-answer"></p>
         <p class="lede" id="paradox-lede"></p>
         <div class="bigstats" id="bigstats"></div>
         <div class="balance card" id="balance"></div>
@@ -44,11 +57,12 @@
       </div>
     </section>
 
-    <!-- ============ 2. WHO PAID LESS ============ -->
-    <section class="story alt" aria-labelledby="h-less">
+    <!-- ============ Q2. BUSINESSES ============ -->
+    <section class="story alt" id="q2" aria-labelledby="h-less">
       <div class="wrap">
-        <p class="eyebrow">2 · Who paid less?</p>
-        <h2 id="h-less"></h2>
+        <p class="eyebrow">Question 2</p>
+        <h2 id="h-less">Did businesses get a break at homeowners' expense?</h2>
+        <p class="answer" id="less-answer"></p>
         <p class="lede" id="less-lede"></p>
         <div class="split">
           <div class="card">
@@ -57,30 +71,57 @@
           </div>
           <div class="contrast" id="contrast"></div>
         </div>
+        <div class="card explain">
+          <h3>Where a business tax bill goes</h3>
+          <p id="edu-lede"></p>
+          <div class="table-scroll"><table id="edu-table"></table></div>
+        </div>
+        <p class="callout" id="less-callout"></p>
       </div>
     </section>
 
-    <!-- ============ 3. THE CLUSTERS ============ -->
-    <section class="story" aria-labelledby="h-clusters">
+    <!-- ============ Q3. GEOGRAPHY ============ -->
+    <section class="story" id="q3" aria-labelledby="h-clusters">
       <div class="wrap">
-        <p class="eyebrow">3 · Five groups, not one average</p>
-        <h2 id="h-clusters">Bills didn't change randomly. They moved in blocks.</h2>
+        <p class="eyebrow">Question 3</p>
+        <h2 id="h-clusters">Why did some neighbourhoods see 7% when most saw under 2%?</h2>
+        <p class="answer" id="clusters-answer"></p>
         <p class="lede" id="clusters-lede"></p>
         <div class="card">
           <h3 class="chart-title">Number of properties by percent change in tax bill <span class="muted">(log scale, so small groups are visible)</span></h3>
           <div class="chart-box tall"><canvas id="hist-chart" role="img" aria-label="Histogram of percent change in tax bills, coloured by group"></canvas></div>
         </div>
         <div class="groups" id="groups"></div>
+
+        <h3 class="sub-h">The stacks are neighbourhoods</h3>
+        <p class="lede" id="tiers-lede"></p>
+        <div class="card">
+          <h3 class="chart-title">Effective tax rate on a home, 2020 → 2021 <span class="muted">(tax bill ÷ assessed value)</span></h3>
+          <div class="tiers" id="tiers"></div>
+          <p class="note">Place names are inferred from the streets, coordinates and wards in each group. The City's files give only codes.</p>
+        </div>
         <p class="callout" id="clusters-callout"></p>
       </div>
     </section>
 
-    <!-- ============ 4. MAP ============ -->
-    <section class="story alt" id="explore" aria-labelledby="h-map">
+    <!-- ============ Q4. RATE VS BILL ============ -->
+    <section class="story alt" id="q4" aria-labelledby="h-bridge">
+      <div class="wrap">
+        <p class="eyebrow">Question 4</p>
+        <h2 id="h-bridge">If the tax rate rose 2.5%, why did my bill rise only 1.7%?</h2>
+        <p class="answer" id="bridge-answer"></p>
+        <p class="lede" id="bridge-lede"></p>
+        <div class="card" id="bridge"></div>
+        <p class="callout" id="bridge-callout"></p>
+      </div>
+    </section>
+
+    <!-- ============ MAP ============ -->
+    <section class="story" id="explore" aria-labelledby="h-map">
       <div class="wrap wide">
-        <p class="eyebrow">4 · Explore</p>
+        <p class="eyebrow">Explore</p>
         <h2 id="h-map">See it street by street</h2>
-        <p class="lede">Zoom in until every property lot appears. Change what the colours mean with the buttons, or pick a ward from the list.</p>
+        <p class="lede">Zoom in until every property lot appears. Try "% change" and zoom into eastern Stoney Creek or Waterdown: the tiers from Question 3 show up as patches of colour.</p>
 
         <div class="toolbar">
           <div class="seg" role="group" aria-label="Colour the map by" id="measure-seg"></div>
@@ -109,24 +150,33 @@
       </div>
     </section>
 
-    <!-- ============ 5. EXTREMES ============ -->
-    <section class="story" aria-labelledby="h-extremes">
+    <!-- ============ Q5. RATIOS ============ -->
+    <section class="story alt" id="q5" aria-labelledby="h-ratio">
       <div class="wrap">
-        <p class="eyebrow">5 · The extremes</p>
-        <h2 id="h-extremes">The biggest swings in the city</h2>
-        <p class="lede">These are the five largest dollar increases and decreases. Every one is a large site assessed in the tens of millions of dollars, mostly commercial, industrial or apartment buildings rather than homes. Click one to see where it is.</p>
-        <div class="split even">
-          <div><h3 class="col-title up">Biggest increases</h3><ol class="extremes" id="ext-up"></ol></div>
-          <div><h3 class="col-title down">Biggest decreases</h3><ol class="extremes" id="ext-down"></ol></div>
+        <p class="eyebrow">Question 5</p>
+        <h2 id="h-ratio">Then who is quietly paying more each year?</h2>
+        <p class="answer" id="ratio-answer"></p>
+        <p class="lede" id="ratio-lede"></p>
+        <div class="split">
+          <div class="card">
+            <h3 class="chart-title" id="ratio-title"></h3>
+            <div class="chart-box"><canvas id="ratio-chart" role="img" aria-label="Bar chart: extra residential levy from tax ratio changes, 2021 to 2025"></canvas></div>
+          </div>
+          <div class="card">
+            <h3 class="chart-title">Tax ratios: what each class pays per dollar of value, relative to a home</h3>
+            <div class="table-scroll"><table id="ratio-table"></table></div>
+            <p class="note" id="ratio-note"></p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ 6. ZOOM OUT ============ -->
-    <section class="story alt" aria-labelledby="h-history">
+    <!-- ============ Q6. ZOOM OUT ============ -->
+    <section class="story" id="q6" aria-labelledby="h-history">
       <div class="wrap">
-        <p class="eyebrow">6 · Zoom out</p>
-        <h2 id="h-history"></h2>
+        <p class="eyebrow">Question 6</p>
+        <h2 id="h-history">Was 2021 a normal year?</h2>
+        <p class="answer" id="history-answer"></p>
         <p class="lede" id="history-lede"></p>
         <div class="split even">
           <div class="card">
@@ -138,7 +188,31 @@
             <div class="chart-box"><canvas id="rate-chart" role="img" aria-label="Line chart of tax rates by property class since 2020"></canvas></div>
           </div>
         </div>
+        <p class="callout" id="home-path"></p>
         <p class="note" id="history-note"></p>
+      </div>
+    </section>
+
+    <!-- ============ EXTREMES ============ -->
+    <section class="story alt" aria-labelledby="h-extremes">
+      <div class="wrap">
+        <p class="eyebrow">The extremes</p>
+        <h2 id="h-extremes">The biggest swings in the city</h2>
+        <p class="lede">These are the five largest dollar increases and decreases. Every one is a large site assessed in the tens of millions of dollars, mostly commercial, industrial or apartment buildings rather than homes. Click one to see where it is.</p>
+        <div class="split even">
+          <div><h3 class="col-title up">Biggest increases</h3><ol class="extremes" id="ext-up"></ol></div>
+          <div><h3 class="col-title down">Biggest decreases</h3><ol class="extremes" id="ext-down"></ol></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OPEN QUESTIONS ============ -->
+    <section class="story" aria-labelledby="h-open">
+      <div class="wrap">
+        <p class="eyebrow">What the data can't answer</p>
+        <h2 id="h-open">Questions only the City can answer</h2>
+        <p class="lede">The data shows what happened to every bill. It doesn't always show why. These are the gaps worth asking about.</p>
+        <ol class="open-qs" id="open-qs"></ol>
       </div>
     </section>
   </main>
@@ -149,6 +223,7 @@
       <p id="source"></p>
       <p id="data-notes"></p>
       <p class="note" id="class-note"></p>
+      <p class="note">How the numbers are made: the effective rate is a bill divided by its assessed value. The area-specific part is the effective rate minus the city-wide rate from the levy by-law. The ratio effect re-spreads each year's city-wide levy using 2020 tax ratios. Scripts: scripts/build_story.py and scripts/analysis/.</p>
     </div>
   </footer>
 
