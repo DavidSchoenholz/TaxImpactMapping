@@ -1,5 +1,6 @@
 """Briefing analysis, part 1: by-law levy by class, tax ratios, education cut, effective-rate tiers.
 Run from the repo root: python scripts/analysis/briefing_levy_and_tiers.py ."""
+import csv, json, statistics as st, sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
