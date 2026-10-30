@@ -6,12 +6,25 @@ The page tells a story in five parts:
 
 - **Lookup (top of the page):** type an address and get a "receipt": your change in dollars and percent, which group of properties you fall in, and where you rank. The result has a shareable link (`#p=<roll number>`).
 - **1 · The headline:** almost every bill rose, yet the city's total tax only rose 0.65%.
-- **2 · Who paid less:** the 3.5% of properties that got a cut hold 26% of the city's tax dollars.
-- **3 · Five groups:** a histogram showing that bills changed in distinct blocks (for example a block of about 5,000 properties, mostly in Ward 10, that rose about 6.8%).
+- **2 · Who paid less:** businesses did. 87% of commercial and 98% of industrial properties got a cut (the education part of the business tax rate fell), against 0.4% of residential ones.
+- **3 · Five groups:** a histogram showing that bills changed in distinct blocks (for example about 5,000 homes, 85% in the former Stoney Creek, that rose about 6.8%). The blocks follow the old municipal borders, not property class.
 - **4 · Explore:** a large map you can colour by % change, $ change, 2021 bill or "paid less", with a ranked ward list and a sortable table.
 - **5 · The extremes:** the five biggest dollar increases and decreases.
+- **6 · Zoom out:** announced and observed residential increases 2012-2026, and tax rates by class since 2020.
 
-The story numbers come from `data/story.json`. If the underlying data changes, rebuild it with `python scripts/build_story.py` (after `scripts/build_data.py`).
+The story numbers come from `data/story.json` and `data/classes.json`. Rebuild them with `python scripts/build_story.py` (after `scripts/build_data.py`). It reads the files in `data/source/`.
+
+### Source files (`data/source/`)
+
+| File | What it is |
+|---|---|
+| `hamilton_tax_2021_with_class.csv` | The 2021 tax file with property class (`TAX_CLASS_PRIMARY`), property code, former municipality, multi-class flag. **Used for the class findings.** |
+| `hamilton_rates_by_class_with_ratios.csv`, `hamilton_tax_rates_by_class_2020_2025.csv`, `hamilton_tax_multipliers_by_class_by_year.csv` | Municipal, education and total tax rates by class, from the levy by-laws. |
+| `hamilton_annual_tax_increases.csv` | Announced residential increase (from news reports of budgets) and observed median change (from parcel data), by year. |
+| `hamilton_observed_change_by_class.csv` | Observed change by class and year (class codes differ between years). Not used yet. |
+| `hamilton_tax_impact_2012/2013/2016/2018/2019.csv` and `tax_impact_*_shp.zip` | The City's tax impact data and parcel shapes for earlier years. Not used yet. |
+
+Not yet done: colouring the map lots by property class. The lot files (`data/parcels/`) carry no class, and rebuilding them needs geopandas.
 
 ---
 

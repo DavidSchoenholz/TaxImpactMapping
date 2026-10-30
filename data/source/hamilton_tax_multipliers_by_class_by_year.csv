@@ -1,0 +1,92 @@
+class_code,class_name,year,total_citywide_rate,rate_pct_of_assessment,multiplier_from_2021,yoy_multiplier,source
+RT,Residential,2020,0.00902778,0.90278,0.9753,,levy by-law Schedule C
+RT,Residential,2021,0.00925687,0.92569,1.0000,1.0254,levy by-law Schedule C
+RT,Residential,2022,0.00958065,0.95806,1.0350,1.0350,levy by-law Schedule C
+RT,Residential,2023,0.01028632,1.02863,1.1112,1.0737,levy by-law Schedule C
+RT,Residential,2024,0.01094478,1.09448,1.1823,1.0640,levy by-law Schedule C
+RT,Residential,2025,0.01167365,1.16736,1.2611,1.0666,levy by-law Schedule C
+RT,Residential,2026,0.01212542,1.21254,1.3099,1.0387,"announced budget increase (3.87%), levy by-law not yet published"
+NT,New Multi-Residential,2020,0.00902778,0.90278,0.9753,,levy by-law Schedule C
+NT,New Multi-Residential,2021,0.00925687,0.92569,1.0000,1.0254,levy by-law Schedule C
+NT,New Multi-Residential,2022,0.00958065,0.95806,1.0350,1.0350,levy by-law Schedule C
+NT,New Multi-Residential,2023,0.01028632,1.02863,1.1112,1.0737,levy by-law Schedule C
+NT,New Multi-Residential,2024,0.01094478,1.09448,1.1823,1.0640,levy by-law Schedule C
+NT,New Multi-Residential,2025,0.01167365,1.16736,1.2611,1.0666,levy by-law Schedule C
+NT,New Multi-Residential,2026,0.01212542,1.21254,1.3099,1.0387,"announced budget increase (3.87%), levy by-law not yet published"
+MT,Multi-Residential,2020,0.02018148,2.01815,0.9898,,levy by-law Schedule C
+MT,Multi-Residential,2021,0.02038898,2.03890,1.0000,1.0103,levy by-law Schedule C
+MT,Multi-Residential,2022,0.02052471,2.05247,1.0067,1.0067,levy by-law Schedule C
+MT,Multi-Residential,2023,0.02094627,2.09463,1.0273,1.0205,levy by-law Schedule C
+MT,Multi-Residential,2024,0.02097905,2.09790,1.0289,1.0016,levy by-law Schedule C
+MT,Multi-Residential,2025,0.02181730,2.18173,1.0701,1.0400,levy by-law Schedule C
+MT,Multi-Residential,2026,,,,,no published levy by-law for this year
+CT,Commercial,2020,0.02464560,2.46456,1.0227,,levy by-law Schedule C
+CT,Commercial,2021,0.02409921,2.40992,1.0000,0.9778,levy by-law Schedule C
+CT,Commercial,2022,0.02474029,2.47403,1.0266,1.0266,levy by-law Schedule C
+CT,Commercial,2023,0.02613752,2.61375,1.0846,1.0565,levy by-law Schedule C
+CT,Commercial,2024,0.02744126,2.74413,1.1387,1.0499,levy by-law Schedule C
+CT,Commercial,2025,0.02888442,2.88844,1.1986,1.0526,levy by-law Schedule C
+CT,Commercial,2026,,,,,no published levy by-law for this year
+DT,Commercial - Office Building,2020,0.02464560,2.46456,1.0227,,levy by-law Schedule C
+DT,Commercial - Office Building,2021,0.02409921,2.40992,1.0000,0.9778,levy by-law Schedule C
+DT,Commercial - Office Building,2022,0.02474029,2.47403,1.0266,1.0266,levy by-law Schedule C
+DT,Commercial - Office Building,2023,0.02613752,2.61375,1.0846,1.0565,levy by-law Schedule C
+DT,Commercial - Office Building,2024,0.02744126,2.74413,1.1387,1.0499,levy by-law Schedule C
+DT,Commercial - Office Building,2025,0.02888442,2.88844,1.1986,1.0526,levy by-law Schedule C
+DT,Commercial - Office Building,2026,,,,,no published levy by-law for this year
+GT,Commercial - Parking Lot,2020,0.02464560,2.46456,1.0227,,levy by-law Schedule C
+GT,Commercial - Parking Lot,2021,0.02409921,2.40992,1.0000,0.9778,levy by-law Schedule C
+GT,Commercial - Parking Lot,2022,0.02474029,2.47403,1.0266,1.0266,levy by-law Schedule C
+GT,Commercial - Parking Lot,2023,0.02613752,2.61375,1.0846,1.0565,levy by-law Schedule C
+GT,Commercial - Parking Lot,2024,0.02744126,2.74413,1.1387,1.0499,levy by-law Schedule C
+GT,Commercial - Parking Lot,2025,0.02888442,2.88844,1.1986,1.0526,levy by-law Schedule C
+GT,Commercial - Parking Lot,2026,,,,,no published levy by-law for this year
+ST,Commercial - Shopping,2020,0.02464560,2.46456,1.0227,,levy by-law Schedule C
+ST,Commercial - Shopping,2021,0.02409921,2.40992,1.0000,0.9778,levy by-law Schedule C
+ST,Commercial - Shopping,2022,0.02474029,2.47403,1.0266,1.0266,levy by-law Schedule C
+ST,Commercial - Shopping,2023,0.02613752,2.61375,1.0846,1.0565,levy by-law Schedule C
+ST,Commercial - Shopping,2024,0.02744126,2.74413,1.1387,1.0499,levy by-law Schedule C
+ST,Commercial - Shopping,2025,0.02888442,2.88844,1.1986,1.0526,levy by-law Schedule C
+ST,Commercial - Shopping,2026,,,,,no published levy by-law for this year
+IT,Industrial,2020,0.03652157,3.65216,1.0771,,levy by-law Schedule C
+IT,Industrial,2021,0.03390702,3.39070,1.0000,0.9284,levy by-law Schedule C
+IT,Industrial,2022,0.03455011,3.45501,1.0190,1.0190,levy by-law Schedule C
+IT,Industrial,2023,0.03596660,3.59666,1.0607,1.0410,levy by-law Schedule C
+IT,Industrial,2024,0.03710659,3.71066,1.0944,1.0317,levy by-law Schedule C
+IT,Industrial,2025,0.03837494,3.83749,1.1318,1.0342,levy by-law Schedule C
+IT,Industrial,2026,,,,,no published levy by-law for this year
+LT,Industrial - Large,2020,0.04081250,4.08125,1.0672,,levy by-law Schedule C
+LT,Industrial - Large,2021,0.03824102,3.82410,1.0000,0.9370,levy by-law Schedule C
+LT,Industrial - Large,2022,0.03899513,3.89951,1.0197,1.0197,levy by-law Schedule C
+LT,Industrial - Large,2023,0.04065613,4.06561,1.0632,1.0426,levy by-law Schedule C
+LT,Industrial - Large,2024,0.04199291,4.19929,1.0981,1.0329,levy by-law Schedule C
+LT,Industrial - Large,2025,0.04348021,4.34802,1.1370,1.0354,levy by-law Schedule C
+LT,Industrial - Large,2026,,,,,no published levy by-law for this year
+HT,Landfills,2020,0.03906724,3.90672,1.2306,,levy by-law Schedule C
+HT,Landfills,2021,0.03174583,3.17458,1.0000,0.8126,levy by-law Schedule C
+HT,Landfills,2022,0.03270733,3.27073,1.0303,1.0303,levy by-law Schedule C
+HT,Landfills,2023,0.03480290,3.48029,1.0963,1.0641,levy by-law Schedule C
+HT,Landfills,2024,0.03675826,3.67583,1.1579,1.0562,levy by-law Schedule C
+HT,Landfills,2025,0.03892272,3.89227,1.2261,1.0589,levy by-law Schedule C
+HT,Landfills,2026,,,,,no published levy by-law for this year
+PT,Pipelines,2020,0.02325624,2.32562,1.0260,,levy by-law Schedule C
+PT,Pipelines,2021,0.02266739,2.26674,1.0000,0.9747,levy by-law Schedule C
+PT,Pipelines,2022,0.02324848,2.32485,1.0256,1.0256,levy by-law Schedule C
+PT,Pipelines,2023,0.02451495,2.45149,1.0815,1.0545,levy by-law Schedule C
+PT,Pipelines,2024,0.02569668,2.56967,1.1336,1.0482,levy by-law Schedule C
+PT,Pipelines,2025,0.02700477,2.70048,1.1913,1.0509,levy by-law Schedule C
+PT,Pipelines,2026,,,,,no published levy by-law for this year
+FT,Farm,2020,0.00170736,0.17074,0.9768,,levy by-law Schedule C
+FT,Farm,2021,0.00174784,0.17478,1.0000,1.0237,levy by-law Schedule C
+FT,Farm,2022,0.00180505,0.18050,1.0327,1.0327,levy by-law Schedule C
+FT,Farm,2023,0.00192974,0.19297,1.1041,1.0691,levy by-law Schedule C
+FT,Farm,2024,0.00204609,0.20461,1.1706,1.0603,levy by-law Schedule C
+FT,Farm,2025,0.00217488,0.21749,1.2443,1.0629,levy by-law Schedule C
+FT,Farm,2026,,,,,no published levy by-law for this year
+TT,Managed Forests,2020,0.00225695,0.22570,0.9753,,levy by-law Schedule C
+TT,Managed Forests,2021,0.00231422,0.23142,1.0000,1.0254,levy by-law Schedule C
+TT,Managed Forests,2022,0.00239516,0.23952,1.0350,1.0350,levy by-law Schedule C
+TT,Managed Forests,2023,0.00257158,0.25716,1.1112,1.0737,levy by-law Schedule C
+TT,Managed Forests,2024,0.00273620,0.27362,1.1823,1.0640,levy by-law Schedule C
+TT,Managed Forests,2025,0.00291841,0.29184,1.2611,1.0666,levy by-law Schedule C
+TT,Managed Forests,2026,0.00303135,0.30314,1.3099,1.0387,"announced budget increase (3.87%), levy by-law not yet published"

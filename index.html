@@ -52,8 +52,8 @@
         <p class="lede" id="less-lede"></p>
         <div class="split">
           <div class="card">
-            <h3 class="chart-title" id="decile-title"></h3>
-            <div class="chart-box"><canvas id="decile-chart" role="img" aria-label="Bar chart: share of properties paying less, by size of 2020 bill"></canvas></div>
+            <h3 class="chart-title" id="class-title"></h3>
+            <div class="chart-box"><canvas id="class-chart" role="img" aria-label="Bar chart: typical percent change in tax bill, by property class"></canvas></div>
           </div>
           <div class="contrast" id="contrast"></div>
         </div>
@@ -71,6 +71,7 @@
           <div class="chart-box tall"><canvas id="hist-chart" role="img" aria-label="Histogram of percent change in tax bills, coloured by group"></canvas></div>
         </div>
         <div class="groups" id="groups"></div>
+        <p class="callout" id="clusters-callout"></p>
       </div>
     </section>
 
@@ -113,11 +114,31 @@
       <div class="wrap">
         <p class="eyebrow">5 · The extremes</p>
         <h2 id="h-extremes">The biggest swings in the city</h2>
-        <p class="lede">These are the five largest dollar increases and decreases. The biggest swings are on sites assessed in the tens of millions of dollars, which look like large commercial or industrial properties rather than homes. Click one to see where it is.</p>
+        <p class="lede">These are the five largest dollar increases and decreases. Every one is a large site assessed in the tens of millions of dollars, mostly commercial, industrial or apartment buildings rather than homes. Click one to see where it is.</p>
         <div class="split even">
           <div><h3 class="col-title up">Biggest increases</h3><ol class="extremes" id="ext-up"></ol></div>
           <div><h3 class="col-title down">Biggest decreases</h3><ol class="extremes" id="ext-down"></ol></div>
         </div>
+      </div>
+    </section>
+
+    <!-- ============ 6. ZOOM OUT ============ -->
+    <section class="story alt" aria-labelledby="h-history">
+      <div class="wrap">
+        <p class="eyebrow">6 · Zoom out</p>
+        <h2 id="h-history"></h2>
+        <p class="lede" id="history-lede"></p>
+        <div class="split even">
+          <div class="card">
+            <h3 class="chart-title">Residential tax increase, by year</h3>
+            <div class="chart-box"><canvas id="annual-chart" role="img" aria-label="Bar chart of residential tax increases by year, announced and observed"></canvas></div>
+          </div>
+          <div class="card">
+            <h3 class="chart-title">Tax rate by property class <span class="muted">(2020 = 100)</span></h3>
+            <div class="chart-box"><canvas id="rate-chart" role="img" aria-label="Line chart of tax rates by property class since 2020"></canvas></div>
+          </div>
+        </div>
+        <p class="note" id="history-note"></p>
       </div>
     </section>
   </main>
@@ -127,7 +148,7 @@
       <h2 class="visually-hidden">About this data</h2>
       <p id="source"></p>
       <p id="data-notes"></p>
-      <p class="note">The data has no property type, so descriptions such as "large commercial sites" are inferred from bill size and are not confirmed. The data also does not say why a group's rate differed. For that, ask the City.</p>
+      <p class="note" id="class-note"></p>
     </div>
   </footer>
 

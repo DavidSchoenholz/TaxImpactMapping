@@ -5,6 +5,7 @@ const state = {
   summary: null,
   story: null,
   properties: null,        // rows from data/properties.json
+  classes: null,           // data/classes.json: roll number -> class code (all except residential)
   propertiesPromise: null,
   sortedChanges: null,     // $ changes of taxed properties, ascending (for percentiles)
   measure: CONFIG.defaultMeasure,
@@ -80,12 +81,18 @@ async function init() {
   renderLess();
   renderClusters();
   renderExtremes();
+  renderHistory();
   renderTable();
   initLookup();
   state.mapReady = initMap();
 
   const n = state.summary.notes;
   $("source").textContent = CONFIG.sourceNote;
+  $("class-note").textContent =
+    "Property classes come from the City's 2021 file with tax class (data/source/hamilton_tax_2021_with_class.csv). Classes named in the City's rate table are used as given; " +
+    "the rest (for example CX, XT, IX, E) are grouped by their standard Ontario class code and may not be perfect. " +
+    "Former-municipality names (Stoney Creek, Ancaster and so on) are inferred from the wards each municipality code covers; the files don't name them. " +
+    "The data doesn't explain why some groups of homes got different rates.";
   $("data-notes").textContent =
     `${fmtCount(n.rows_after_cleaning)} properties in the file; ${fmtCount(n.properties_in_stats)} used in the ` +
     `statistics (${fmtCount(n.untaxed_or_unassigned)} had no tax in one of the years or no ward).` +
@@ -94,7 +101,7 @@ async function init() {
 
   // Redraw in the right colours when the device switches light/dark.
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-    renderLess(); renderClusters();
+    renderLess(); renderClusters(); renderHistory();
     if (state.mapLayer) { styleMap(); restyleParcels(); }
   });
 
@@ -126,7 +133,7 @@ function renderParadox() {
   $("h-paradox").textContent = "Almost every bill rose. The city's total barely did.";
   $("paradox-lede").textContent =
     `${fmtShare(c.share_increase)} of properties paid more in ${y1}, yet ${CONFIG.cityName} collected only ` +
-    `${t.net_pct.toFixed(2)}% more in total. The gap comes down to a few thousand very large bills.`;
+    `${t.net_pct.toFixed(2)}% more in total. The gap comes down to a few thousand businesses whose bills fell.`;
 
   const tiles = [
     { num: fmtShare(c.share_increase), what: "of properties paid more", more: `${fmtCount(t.n_more)} of ${fmtCount(t.n_taxed)} taxed properties` },
@@ -137,6 +144,7 @@ function renderParadox() {
     .map((x) => `<div class="bigstat"><div class="num">${x.num}</div><div class="what">${x.what}</div><div class="more">${x.more}</div></div>`)
     .join("");
 
+  const lb = state.story.less_by_class;
   const max = t.increase_total;
   const rows = [
     { cls: "more", lab: "Paid more", sub: `${fmtCount(t.n_more)} properties`, v: t.increase_total },
@@ -147,7 +155,7 @@ function renderParadox() {
     `<h3>Where the extra money went</h3>` +
     rows.map((r) => `<div class="bal-row"><div class="lab"><strong>${r.lab}</strong><small>${r.sub}</small></div>` +
       `<div class="bal-bar ${r.cls}" data-w="${Math.max(12, Math.abs(r.v) / max * 100)}" style="width:0">${signed(fmtMoneyShort(r.v), r.v)}</div></div>`).join("") +
-    `<p class="bal-note">The ${fmtCount(t.n_less)} properties that got a cut cancelled out about ${Math.round(-t.decrease_total / t.increase_total * 100)}% of the extra everyone else paid.</p>`;
+    `<p class="bal-note">The ${fmtCount(t.n_less)} properties that got a cut cancelled out about ${Math.round(-t.decrease_total / t.increase_total * 100)}% of the extra everyone else paid. Most of them (${fmtShare((lb.mix.commercial + lb.mix.industrial) / lb.n)}) are commercial or industrial properties.</p>`;
   requestAnimationFrame(() => requestAnimationFrame(() =>
     document.querySelectorAll(".bal-bar").forEach((b) => (b.style.width = b.dataset.w + "%"))));
 
@@ -159,48 +167,57 @@ function renderParadox() {
 // ---------- 2. who paid less -------------------------------------------
 
 function renderLess() {
-  const t = state.story.totals, d = state.story.deciles;
-  const top = d[9];
-  const otherMax = Math.max(...d.slice(0, 9).map((x) => x.share_less));
-  const lessGroup = state.story.groups.find((g) => g.key === "less");
+  const st = state.story;
+  const cls = Object.fromEntries(st.classes.map((c) => [c.key, c]));
+  const rc = st.rate_change_2021, lb = st.less_by_class;
+  const res = cls.residential, com = cls.commercial, ind = cls.industrial;
+  const edu = (c) => `${(c.education_2020 * 100).toFixed(2)}% to ${(c.education_2021 * 100).toFixed(2)}%`;
+  const muniRise = (c) => ((c.municipal_2021 / c.municipal_2020 - 1) * 100).toFixed(0);
 
-  $("h-less").textContent = "The bigger the bill, the likelier it fell.";
+  $("h-less").textContent = "Businesses paid less. Homes paid more.";
   $("less-lede").textContent =
-    `Of the top tenth of bills (${fmtDollars(top.from_bill)} a year and up), ${fmtShare(top.share_less)} went down. ` +
-    `In every other tenth, ${fmtShare(otherMax)} or fewer did.`;
-  $("decile-title").textContent = "Share of properties paying less, by size of 2020 bill (each bar is one tenth of all properties)";
+    `${fmtShare(com.share_less)} of commercial and ${fmtShare(ind.share_less)} of industrial properties got a cut, against ${fmtShare(res.share_less)} of residential ones. ` +
+    `The reason is in the tax rates: the education part of the business rate fell in ${CONFIG.yearAfter} ` +
+    `(commercial ${edu(rc.CT)} of assessed value, industrial ${edu(rc.IT)}), while the City's own part rose about ${muniRise(rc.CT)}%. ` +
+    `Residential rates rose ${rc.RT.total_change_pct}%, though typical residential bills rose ${fmtPercent(res.median_pct)}. The data doesn't explain that difference.`;
+  $("class-title").textContent = "Typical % change in tax bill, by property class";
 
-  const topWards = lessGroup.top_wards;
-  const topShare = topWards.reduce((s, w) => s + w[1], 0) / lessGroup.n;
+  const shown = ["residential", "multi", "commercial", "industrial", "farm"].map((k) => cls[k]);
+  const businessNet = com.net + ind.net;
   const items = [
-    { num: fmtSignedDollars(t.median_change_less), what: `typical change for a property that paid less. Their median bill: ${fmtDollars(t.median_bill_less)}.` },
-    { num: fmtSignedDollars(t.median_change_rest), what: `typical change for everyone else. Their median bill: ${fmtDollars(t.median_bill_rest)}.` },
-    { num: fmtShare(t.tax_share_of_less), what: `of all ${CONFIG.yearBefore} tax dollars came from the ${fmtShare(t.share_less)} of properties that got a cut.` },
-    { num: fmtShare(topShare), what: `of them are in just three wards: ${topWards.map((w) => w[0]).join(", ").replace(/, (\d+)$/, " and $1")}.` },
+    { num: fmtShare(com.share_less), what: `of ${fmtCount(com.n)} commercial properties paid less. Their median bill is ${fmtDollars(com.median_bill)}, against ${fmtDollars(res.median_bill)} for homes.` },
+    { num: fmtShare(ind.share_less), what: `of ${fmtCount(ind.n)} industrial properties paid less, by a typical ${fmtSignedPercent(ind.median_pct)} (${fmtSignedDollars(ind.median_change)}).` },
+    { num: signed(fmtMoneyShort(businessNet), businessNet), what: `total change for commercial and industrial properties, while residential properties together paid ${fmtMoneyShort(res.net)} more.` },
+    { num: fmtCount(lb.mix.residential), what: `residential-class properties also got a cut. ${fmtCount(lb.residential_mixed_use)} of them are parcels shared with another class, such as a home combined with a shop.` },
   ];
   $("contrast").innerHTML = items
     .map((x) => `<div class="card"><div class="num">${x.num}</div><div class="what">${x.what}</div></div>`).join("");
 
-  const isLast = (i) => i === d.length - 1;
-  makeChart("decile", $("decile-chart"), {
+  makeChart("class", $("class-chart"), {
     type: "bar",
     data: {
-      labels: d.map((x) => fmtDollars(x.from_bill) + "+"),
+      labels: shown.map((c) => c.label),
       datasets: [{
-        data: d.map((x) => x.share_less * 100),
-        backgroundColor: d.map((x, i) => (isLast(i) ? css("--g-less") : css("--no-change"))),
+        data: shown.map((c) => c.median_pct),
+        backgroundColor: shown.map((c) => (c.median_pct < 0 ? css("--decrease") : css("--increase"))),
         borderRadius: 4,
       }],
     },
     options: {
+      indexAxis: "y",
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { title: (it) => `Bills of ${it[0].label} and up`, label: (it) => `${it.raw.toFixed(1)}% paid less` } },
+        tooltip: {
+          callbacks: {
+            title: (it) => shown[it[0].dataIndex].label,
+            label: (it) => { const c = shown[it.dataIndex]; return [`Typical change: ${fmtSignedPercent(c.median_pct)} (${fmtSignedDollars(c.median_change)})`, `${fmtShare(c.share_less)} paid less`, `${fmtCount(c.n)} properties`]; },
+          },
+        },
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: css("--text-muted"), maxRotation: 0, font: { size: 11 } }, title: { display: true, text: "Smallest bill in each tenth", color: css("--text-muted") } },
-        y: { beginAtZero: true, grid: { color: css("--line") }, ticks: { color: css("--text-muted"), callback: (v) => v + "%" } },
+        x: { grid: { color: css("--line") }, ticks: { color: css("--text-muted"), callback: (v) => v + "%" } },
+        y: { grid: { display: false }, ticks: { color: css("--text-soft") } },
       },
     },
   });
@@ -225,11 +242,22 @@ function groupRange(g) {
   return `${g.lo}–${g.hi}%`;
 }
 
+function classLabel(key) {
+  const c = state.story.classes.find((x) => x.key === key);
+  return c ? c.label : key;
+}
+
+const muniPhrase = (name) => (name === "Hamilton" ? "the old City of Hamilton" : name);
+
+// "98% are residential. 85% are in Stoney Creek."
 function wardPhrase(g) {
-  const [w, n] = g.top_wards[0];
-  const share = n / g.n;
-  if (share >= 0.5) return `${Math.round(share * 100)}% of them are in ${wardLabel(w)}.`;
-  return `Spread across the city; most are in wards ${g.top_wards.map((x) => x[0]).join(", ").replace(/, (\d+)$/, " and $1")}.`;
+  const [ck, cn] = g.class_mix[0], [mn, mc] = g.top_munis[0];
+  const cs = cn / g.n, ms = mc / g.n;
+  const cPart = cs >= 0.5 ? `${Math.round(cs * 100)}% are ${ck === "other" ? "unclassified" : classLabel(ck).toLowerCase()}. ` : "";
+  const mPart = ms >= 0.5
+    ? `${Math.round(ms * 100)}% are in ${muniPhrase(mn)}.`
+    : `Found in ${g.top_munis.map((x) => muniPhrase(x[0])).join(", ").replace(/, ([^,]+)$/, " and $1")}.`;
+  return cPart + mPart;
 }
 
 function renderClusters() {
@@ -239,6 +267,13 @@ function renderClusters() {
     `Line up every property by how much its bill changed and you don't get a smooth bell shape. You get stacks. ` +
     `${fmtShare(typical.share)} of bills landed between ${typical.lo}% and ${typical.hi}%, and the rest clumped in distinct blocks, ` +
     `each tied to particular parts of the city.`;
+
+  const jump = st.groups.find((g) => g.key === "jump");
+  const jumpClass = jump.class_mix[0];
+  $("clusters-callout").textContent =
+    `The blocks follow the old municipal borders, not property type. The big-jump block is ${Math.round(jumpClass[1] / jump.n * 100)}% ${classLabel(jumpClass[0]).toLowerCase()} and ` +
+    `${Math.round(jump.top_munis[0][1] / jump.n * 100)}% in ${muniPhrase(jump.top_munis[0][0])}, while homes in the old City of Hamilton almost all got the standard rise. ` +
+    `That points to area-specific rates. The files don't say which, so the City's budget documents are the place to look.`;
 
   const colourFor = (from) => {
     const mid = from + 0.05;
@@ -308,7 +343,7 @@ function renderExtremes() {
       <li tabindex="0" data-i="${i}">
         <span class="a">${escapeHtml(r.address)}</span>
         <span class="d ${r.change > 0 ? "up" : "down"}">${fmtSignedDollars(r.change)}</span>
-        <span class="m">${wardLabel(r.ward)} · ${fmtDollars(r.tax2020)} → ${fmtDollars(r.tax2021)}</span>
+        <span class="m">${wardLabel(r.ward)} · ${r.class && r.class !== "other" ? escapeHtml(classLabel(r.class)) + " · " : ""}${fmtDollars(r.tax2020)} → ${fmtDollars(r.tax2021)}</span>
         <span class="m" style="text-align:right">${fmtSignedPercent(r.pct)}</span>
       </li>`).join("");
     $(id).querySelectorAll("li").forEach((li) => {
@@ -319,6 +354,63 @@ function renderExtremes() {
   };
   list("ext-up", state.story.extremes.up);
   list("ext-down", state.story.extremes.down);
+}
+
+// ---------- 6. zoom out ------------------------------------------------
+
+function renderHistory() {
+  const st = state.story;
+  const ann = st.annual;
+  const idx = st.rate_index;
+  const at = (code, year) => (idx[code].find((p) => p[0] === year) || [])[1];
+
+  $("h-history").textContent = `${CONFIG.yearAfter} was a gentle year. The next few were not.`;
+  $("history-lede").textContent =
+    `Council's announced residential increase was ${ann.find((a) => a.year === CONFIG.yearAfter).announced}% in ${CONFIG.yearAfter}, ` +
+    `then ${ann.filter((a) => a.year >= 2023 && a.year <= 2025).map((a) => a.announced + "%").join(", ").replace(/, ([^,]+)$/, " and $1")} for 2023 to 2025. ` +
+    `Since 2020 the residential tax rate is up ${Math.round(at("RT", 2025) - 100)}%, against ${Math.round(at("CT", 2025) - 100)}% for commercial and ${Math.round(at("IT", 2025) - 100)}% for industrial.`;
+  $("history-note").textContent =
+    "Announced figures are the average residential increase reported when council adopted each budget (sources are in data/source/hamilton_annual_tax_increases.csv). " +
+    "Observed figures are the median residential change in the City's parcel data, available only for years the City published a parcel layer. " +
+    `They don't always agree (${CONFIG.yearAfter}: 2.1% announced, 1.7% observed) and the data doesn't say why.`;
+
+  makeChart("annual", $("annual-chart"), {
+    type: "bar",
+    data: {
+      labels: ann.map((a) => a.year),
+      datasets: [
+        { label: "Announced", data: ann.map((a) => a.announced), backgroundColor: css("--no-change"), borderRadius: 3 },
+        { label: "Observed (median)", data: ann.map((a) => a.observed), backgroundColor: css("--accent"), borderRadius: 3 },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { color: css("--text-soft"), boxWidth: 12 } }, tooltip: { callbacks: { label: (it) => `${it.dataset.label}: ${it.raw}%` } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: css("--text-muted") } },
+        y: { beginAtZero: true, grid: { color: css("--line") }, ticks: { color: css("--text-muted"), callback: (v) => v + "%" } },
+      },
+    },
+  });
+
+  const lines = [["RT", "Residential", "--increase"], ["MT", "Multi-residential", "--text-muted"], ["CT", "Commercial", "--decrease"], ["IT", "Industrial", "--highlight"]];
+  makeChart("rate", $("rate-chart"), {
+    type: "line",
+    data: {
+      labels: idx.RT.map((p) => p[0]),
+      datasets: lines.map(([code, label, col]) => ({
+        label, data: idx[code].map((p) => p[1]), borderColor: css(col), backgroundColor: css(col), borderWidth: 3, pointRadius: 3, tension: 0.2,
+      })),
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { color: css("--text-soft"), boxWidth: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: css("--text-muted") } },
+        y: { grid: { color: css("--line") }, ticks: { color: css("--text-muted") } },
+      },
+    },
+  });
 }
 
 // ---------- ward table -------------------------------------------------
@@ -678,9 +770,12 @@ async function showOnMap(lat, lon, label, scroll = true) {
 function loadProperties() {
   if (state.propertiesPromise) return state.propertiesPromise;
   $("search-status").textContent = "Loading all 186,000 addresses…";
-  state.propertiesPromise = fetch("data/properties.json")
-    .then((r) => r.json())
-    .then((json) => {
+  state.propertiesPromise = Promise.all([
+      fetch("data/properties.json").then((r) => r.json()),
+      fetch("data/classes.json").then((r) => r.json()).catch(() => null),
+    ])
+    .then(([json, classes]) => {
+      state.classes = classes;
       state.properties = json.rows;
       state.sortedChanges = json.rows.filter((r) => r[4] > 0 && r[5] > 0).map((r) => r[6]).sort((a, b) => a - b);
       resetStatus();
@@ -780,19 +875,23 @@ function showReceipt(p) {
   const st = state.story, city = state.summary.city;
   const wardStats = state.summary.wards.find((w) => w.ward === ward);
   const taxed = t0 > 0 && t1 > 0;
+  const code = state.classes ? (state.classes.rolls[roll] || "RT") : null;
+  const fam = code ? (state.classes.family[code] || "other") : null;
+  const famLabel = code && fam !== "other" ? state.classes.labels[fam] : "";
   const el = $("receipt");
   history.replaceState(null, "", `#p=${roll}`);
 
   let inner;
   if (!taxed) {
-    inner = `<h3>${escapeHtml(address)}</h3><p class="where">${wardLabel(ward)} · Roll ${escapeHtml(roll)}</p>
+    inner = `<h3>${escapeHtml(address)}</h3><p class="where">${wardLabel(ward)}${famLabel ? " · " + famLabel : ""} · Roll ${escapeHtml(roll)}</p>
       <p class="verdict">This property was not billed property tax in ${y0} or ${y1} (${t0 + t1 === 0 ? "no tax in either year" : "tax in only one year"}), so there is no change to compare.</p>`;
   } else {
     const key = groupOf(change, pct);
     const g = st.groups.find((x) => x.key === key);
     let verdict;
     if (key === "less") {
-      verdict = `Your bill went <strong>down</strong>. Only ${fmtShare(st.totals.share_less)} of Hamilton properties got a cut, and their median bill was ${fmtDollars(st.totals.median_bill_less)}.`;
+      verdict = `Your bill went <strong>down</strong>. Only ${fmtShare(st.totals.share_less)} of Hamilton properties got a cut, and their median bill was ${fmtDollars(st.totals.median_bill_less)}.` +
+        (fam === "commercial" || fam === "industrial" ? ` Business tax rates fell in ${y1} because the education part of the rate was cut, which is why most ${famLabel.toLowerCase()} properties paid less.` : "");
     } else if (key === "typical") {
       verdict = `<strong>Right on the standard rise.</strong> ${fmtShare(g.share)} of properties saw an increase of ${g.lo}% to ${g.hi}%.`;
     } else if (g) {
@@ -809,7 +908,7 @@ function showReceipt(p) {
     const pos = Math.min(97, Math.max(3, below * 100));
 
     inner = `<h3>${escapeHtml(address)}</h3>
-      <p class="where">${wardLabel(ward)} · Roll ${escapeHtml(roll)} · Assessed at ${fmtDollars(assessment)}</p>
+      <p class="where">${wardLabel(ward)}${famLabel ? " · " + famLabel : ""} · Roll ${escapeHtml(roll)} · Assessed at ${fmtDollars(assessment)}</p>
       <div class="big"><span class="num ${change > 0 ? "up" : change < 0 ? "down" : ""}">${fmtSignedDollars(change)}</span><span class="sub">a year (${fmtSignedPercent(pct)})</span></div>
       <div class="bills"><span>${y0}: <strong>${fmtDollars(t0)}</strong></span><span class="arrow">→</span><span>${y1}: <strong>${fmtDollars(t1)}</strong></span></div>
       <p class="verdict">${verdict}</p>

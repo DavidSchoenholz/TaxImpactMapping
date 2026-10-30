@@ -1,0 +1,14 @@
+year,announced_residential_increase_pct,announced_source,observed_median_pct,observed_mean_pct,observed_p25_pct,observed_p75_pct,observed_parcels,observed_note
+2012,,,1.10,1.36,0.70,2.10,158948,from parcel data (residential only where class available)
+2013,,,2.10,2.60,1.40,3.20,161221,from parcel data (residential only where class available)
+2016,,,1.40,1.67,0.90,2.10,166294,from parcel data (residential only where class available)
+2017,2.1,"Global News - 2017 budget approved, ~$81 on a $315,000 home",,,,,,no parcel layer published
+2018,,,2.10,2.12,1.00,3.00,182096,from parcel data (residential only where class available)
+2019,2.5,"Global News - 2019 operating budget, ~$88 on a $358,600 home",2.40,2.35,1.40,3.20,183894,from parcel data (residential only where class available)
+2020,2.9,CBC - council approves 2.9% increase,2.90,2.95,2.40,3.50,170333,from parcel data (residential only where class available)
+2021,2.1,The Public Record - final average residential increase,1.70,1.70,1.60,1.70,186453,from parcel data (residential only where class available)
+2022,2.8,Hamilton Independent - prior-year summary,,,,,,no parcel layer published
+2023,5.85,Hamilton Independent - prior-year summary,,,,,,no parcel layer published
+2024,5.79,Hamilton Independent - prior-year summary,,,,,,no parcel layer published
+2025,5.6,Hamilton Independent / FlamboroughToday - 2025 budget adopted,,,,,,no parcel layer published
+2026,3.87,"City of Hamilton - 2026 tax budget adopted Feb 24 2026, ~$209 avg home",,,,,,no parcel layer published
