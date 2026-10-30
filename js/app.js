@@ -92,7 +92,7 @@ async function init() {
     "Property classes come from the City's 2021 file with tax class (data/source/hamilton_tax_2021_with_class.csv). Classes named in the City's rate table are used as given; " +
     "the rest (for example CX, XT, IX, E) are grouped by their standard Ontario class code and may not be perfect. " +
     "Former-municipality names (Stoney Creek, Ancaster and so on) are inferred from the wards each municipality code covers; the files don't name them. " +
-    "The data doesn't explain why some groups of homes got different rates.";
+    "Differences between groups of homes come from the area-specific part of the rate (the bill minus the city-wide rate); the files don't say which local services changed.";
   $("data-notes").textContent =
     `${fmtCount(n.rows_after_cleaning)} properties in the file; ${fmtCount(n.properties_in_stats)} used in the ` +
     `statistics (${fmtCount(n.untaxed_or_unassigned)} had no tax in one of the years or no ward).` +
@@ -179,7 +179,8 @@ function renderLess() {
     `${fmtShare(com.share_less)} of commercial and ${fmtShare(ind.share_less)} of industrial properties got a cut, against ${fmtShare(res.share_less)} of residential ones. ` +
     `The reason is in the tax rates: the education part of the business rate fell in ${CONFIG.yearAfter} ` +
     `(commercial ${edu(rc.CT)} of assessed value, industrial ${edu(rc.IT)}), while the City's own part rose about ${muniRise(rc.CT)}%. ` +
-    `Residential rates rose ${rc.RT.total_change_pct}%, though typical residential bills rose ${fmtPercent(res.median_pct)}. The data doesn't explain that difference.`;
+    `Residential rates rose ${rc.RT.total_change_pct}%, though typical residential bills rose ${fmtPercent(res.median_pct)}: the city-wide rate is only about three quarters of a home's bill, and the area-specific part held flat. ` +
+    `The education cut lowered business bills but did not move City levy onto homes, because education tax goes to the province.`;
   $("class-title").textContent = "Typical % change in tax bill, by property class";
 
   const shown = ["residential", "multi", "commercial", "industrial", "farm"].map((k) => cls[k]);
