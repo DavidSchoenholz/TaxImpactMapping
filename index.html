@@ -3,78 +3,133 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hamilton Tax Impact</title>
-  <meta name="description" content="How 2021 property tax bills changed across Hamilton's wards.">
+  <title>Hamilton Property Tax Impact, 2021</title>
+  <meta name="description" content="Most Hamilton tax bills rose about the same amount in 2021, but a small group of large bills fell. Look up your property and see the whole city on a map.">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1 id="title">Property Tax Impact</h1>
-      <p id="subtitle"></p>
-    </header>
+  <!-- ============ HERO + LOOKUP ============ -->
+  <header class="hero">
+    <div class="wrap">
+      <p class="eyebrow" id="hero-eyebrow">Hamilton · 2021 property taxes</p>
+      <h1 id="hero-title">What happened to your tax bill?</h1>
+      <p class="hero-sub" id="hero-sub"></p>
 
-    <!-- Headline numbers -->
-    <section aria-labelledby="h-overview">
-      <h2 id="h-overview" class="visually-hidden">Overview</h2>
-      <div class="stats" id="stats"></div>
-      <p class="note" id="assessment-note"></p>
-    </section>
-
-    <!-- Ward comparison: chart + map share the same measure -->
-    <section aria-labelledby="h-wards">
-      <h2 id="h-wards">Ward by ward</h2>
-      <p class="lede">Pick a measure. "Typical" means the median: half of properties are above it, half below. Click a ward to highlight it everywhere on the page.</p>
-      <div class="controls">
-        <label for="metric">Show</label>
-        <select id="metric"></select>
-      </div>
-      <div class="two-col">
-        <div class="card">
-          <div class="chart-box tall"><canvas id="ward-chart" aria-label="Bar chart of the selected measure by ward" role="img"></canvas></div>
+      <div class="finder">
+        <label for="search" class="visually-hidden">Search for a property by address or roll number</label>
+        <div class="finder-box">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="search" id="search" placeholder="Type your street address, e.g. 118 FALCON RD" autocomplete="off"
+                 role="combobox" aria-expanded="false" aria-controls="results" aria-describedby="search-status">
         </div>
-        <div class="card">
-          <div id="map-slot"></div>
+        <div class="results" id="results" role="listbox" hidden></div>
+        <p class="note" id="search-status" aria-live="polite">Or <button type="button" class="link" id="random">show me a random property</button>.</p>
+      </div>
+
+      <div id="receipt" class="receipt" hidden></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ 1. THE PARADOX ============ -->
+    <section class="story" aria-labelledby="h-paradox">
+      <div class="wrap">
+        <p class="eyebrow">1 · The headline</p>
+        <h2 id="h-paradox"></h2>
+        <p class="lede" id="paradox-lede"></p>
+        <div class="bigstats" id="bigstats"></div>
+        <div class="balance card" id="balance"></div>
+        <p class="note" id="assessment-note"></p>
+      </div>
+    </section>
+
+    <!-- ============ 2. WHO PAID LESS ============ -->
+    <section class="story alt" aria-labelledby="h-less">
+      <div class="wrap">
+        <p class="eyebrow">2 · Who paid less?</p>
+        <h2 id="h-less"></h2>
+        <p class="lede" id="less-lede"></p>
+        <div class="split">
+          <div class="card">
+            <h3 class="chart-title" id="decile-title"></h3>
+            <div class="chart-box"><canvas id="decile-chart" role="img" aria-label="Bar chart: share of properties paying less, by size of 2020 bill"></canvas></div>
+          </div>
+          <div class="contrast" id="contrast"></div>
         </div>
       </div>
     </section>
 
-    <!-- Distribution -->
-    <section aria-labelledby="h-dist">
-      <h2 id="h-dist">How big were the changes?</h2>
-      <p class="lede" id="dist-lede">Number of properties by percent change in tax bill. Red bars are increases, blue bars are decreases.</p>
-      <div class="card">
-        <div class="chart-box short"><canvas id="dist-chart" aria-label="Histogram of percent change in tax bills" role="img"></canvas></div>
+    <!-- ============ 3. THE CLUSTERS ============ -->
+    <section class="story" aria-labelledby="h-clusters">
+      <div class="wrap">
+        <p class="eyebrow">3 · Five groups, not one average</p>
+        <h2 id="h-clusters">Bills didn't change randomly. They moved in blocks.</h2>
+        <p class="lede" id="clusters-lede"></p>
+        <div class="card">
+          <h3 class="chart-title">Number of properties by percent change in tax bill <span class="muted">(log scale, so small groups are visible)</span></h3>
+          <div class="chart-box tall"><canvas id="hist-chart" role="img" aria-label="Histogram of percent change in tax bills, coloured by group"></canvas></div>
+        </div>
+        <div class="groups" id="groups"></div>
       </div>
     </section>
 
-    <!-- Lookup -->
-    <section aria-labelledby="h-lookup">
-      <h2 id="h-lookup">Look up a property</h2>
-      <p class="lede">Type a street address (for example <em>123 MAIN ST</em>) or a roll number.</p>
-      <div class="card">
-        <input type="search" id="search" placeholder="Start typing an address…" autocomplete="off" aria-describedby="search-status">
-        <p class="note" id="search-status"></p>
-        <div class="detail" id="detail" hidden></div>
-        <div class="results" id="results" role="listbox"></div>
+    <!-- ============ 4. MAP ============ -->
+    <section class="story alt" id="explore" aria-labelledby="h-map">
+      <div class="wrap wide">
+        <p class="eyebrow">4 · Explore</p>
+        <h2 id="h-map">See it street by street</h2>
+        <p class="lede">Zoom in until every property lot appears. Change what the colours mean with the buttons, or pick a ward from the list.</p>
+
+        <div class="toolbar">
+          <div class="seg" role="group" aria-label="Colour the map by" id="measure-seg"></div>
+          <div class="seg" role="group" aria-label="Map level" id="view-seg">
+            <button type="button" data-view="wards">Wards</button>
+            <button type="button" data-view="lots">Every property</button>
+          </div>
+        </div>
+
+        <div class="map-layout">
+          <div class="map-wrap">
+            <div id="map-slot"><div id="map" role="region" aria-label="Map of Hamilton wards and properties"></div></div>
+            <div class="map-info" id="map-info" aria-live="polite"></div>
+          </div>
+          <aside class="ward-panel card" aria-label="Wards ranked">
+            <h3 id="rank-title">Wards</h3>
+            <ol class="rank" id="rank"></ol>
+            <div id="ward-detail" class="ward-detail" hidden></div>
+          </aside>
+        </div>
+
+        <details class="table-details">
+          <summary>Show the full ward table</summary>
+          <div class="card table-scroll"><table id="ward-table"></table></div>
+        </details>
       </div>
     </section>
 
-    <!-- Table -->
-    <section aria-labelledby="h-table">
-      <h2 id="h-table">All wards</h2>
-      <p class="lede">Click a column heading to sort.</p>
-      <div class="card table-scroll">
-        <table id="ward-table"></table>
+    <!-- ============ 5. EXTREMES ============ -->
+    <section class="story" aria-labelledby="h-extremes">
+      <div class="wrap">
+        <p class="eyebrow">5 · The extremes</p>
+        <h2 id="h-extremes">The biggest swings in the city</h2>
+        <p class="lede">These are the five largest dollar increases and decreases. The biggest swings are on sites assessed in the tens of millions of dollars, which look like large commercial or industrial properties rather than homes. Click one to see where it is.</p>
+        <div class="split even">
+          <div><h3 class="col-title up">Biggest increases</h3><ol class="extremes" id="ext-up"></ol></div>
+          <div><h3 class="col-title down">Biggest decreases</h3><ol class="extremes" id="ext-down"></ol></div>
+        </div>
       </div>
     </section>
+  </main>
 
-    <footer>
+  <footer>
+    <div class="wrap">
+      <h2 class="visually-hidden">About this data</h2>
       <p id="source"></p>
       <p id="data-notes"></p>
-    </footer>
-  </div>
+      <p class="note">The data has no property type, so descriptions such as "large commercial sites" are inferred from bill size and are not confirmed. The data also does not say why a group's rate differed. For that, ask the City.</p>
+    </div>
+  </footer>
 
   <script src="vendor/chartjs/chart.umd.js"></script>
   <script src="vendor/leaflet/leaflet.js"></script>

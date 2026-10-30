@@ -9,29 +9,14 @@
 const CONFIG = {
   // ---- Text shown on the page ----------------------------------------
   title: "Hamilton Property Tax Impact, 2021",
-  subtitle:
-    "How the 2021 tax bill changed from 2020 for about 181,000 properties across Hamilton's 15 wards.",
   cityName: "Hamilton",
   yearBefore: 2020,
   yearAfter: 2021,
   sourceNote:
-    "Source: City of Hamilton 2021 tax impact data. Statistics exclude properties with no tax in either year.",
+    "Source: City of Hamilton 2021 tax impact data (about 186,000 properties). Statistics leave out properties with no tax in either year.",
 
-  // ---- Ward chart ----------------------------------------------------
-  // Which measure the ward chart (and map) shows when the page opens.
-  // Pick one of the keys listed in WARD_METRICS below.
-  defaultWardMetric: "median_dollar_change",
-
-  // The measures people can choose from. Remove a line to hide it.
-  //   label  = name shown in the drop-down
-  //   format = "dollars", "percent" (value is already 0-100), or "share" (0-1)
-  WARD_METRICS: {
-    median_dollar_change:  { label: "Typical $ change in tax bill",     format: "dollars" },
-    median_tax_2021:       { label: "Typical 2021 tax bill",            format: "dollars" },
-    median_percent_change: { label: "Typical % change in tax bill",     format: "percent" },
-    share_decrease:        { label: "Share of properties paying less",  format: "share" },
-    median_assessment:     { label: "Typical assessed value",           format: "dollars" },
-  },
+  // Which measure the map opens on: "pct", "dollars", "bill" or "less".
+  defaultMeasure: "pct",
 
   // Optional ward names, shown next to the number. Leave "" to show only the number.
   WARD_NAMES: {
@@ -41,8 +26,7 @@ const CONFIG = {
 
   // ---- Map -----------------------------------------------------------
   MAP: {
-    // Where the shapes file lives (made from the shapefile, see README).
-    // While this file doesn't exist, the map shows a "coming soon" note.
+    // Ward shapes (made from the parcel shapefile, see README).
     geojsonFile: "data/wards.geojson",
     // Name of the column in the shapes file that holds the ward number.
     joinField: "WARD",
@@ -57,14 +41,12 @@ const CONFIG = {
     parcelZoom: 14,
     // Folder holding the property lot files (made by scripts/build_data.py).
     parcelFolder: "data/parcels",
-    // Dollar amounts where the lot colours change. Colours are set in
-    // css/style.css (--lot-down-... and --lot-up-...).
-    parcelBreaks: {
-      decrease: [-100],          // one value, below 0
-      increase: [50, 100, 200],  // up to 3 values, each above 0
-    },
+
+    // Where the lot colours change (colours are set in css/style.css).
+    dollarBreaks: [50, 100, 200],        // "$ change" view, dollars
+    billBreaks: [2000, 4000, 6000, 10000], // "tax bill" view, dollars
   },
 
   // ---- Property lookup -----------------------------------------------
-  lookupMaxResults: 25,
+  lookupMaxResults: 8,
 };
