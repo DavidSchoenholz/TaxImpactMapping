@@ -15,7 +15,8 @@ const CONFIG = {
   sourceNote:
     "Source: City of Hamilton 2021 tax impact data (about 186,000 properties). Statistics leave out properties with no tax in either year.",
 
-  // Which measure the map opens on: "pct", "dollars", "bill" or "less".
+  // Which measure the map opens on: "pct", "dollars", "less", "value", "bill",
+  // "rate", "type", "growth", "long" or "new".
   defaultMeasure: "pct",
 
   // Optional ward names, shown next to the number. Leave "" to show only the number.
@@ -45,6 +46,7 @@ const CONFIG = {
     // Where the lot colours change (colours are set in css/style.css).
     dollarBreaks: [50, 100, 200],        // "$ change" view, dollars
     billBreaks: [2000, 4000, 6000, 10000], // "tax bill" view, dollars
+    valueBreaks: [200000, 300000, 400000, 500000, 750000], // "assessed value" view
   },
 
   // ---- Property lookup -----------------------------------------------

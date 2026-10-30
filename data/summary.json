@@ -15,7 +15,14 @@
   "total_tax_2020": 1125641149,
   "total_tax_2021": 1132946742,
   "share_increase": 0.9607,
-  "share_decrease": 0.0352
+  "share_decrease": 0.0352,
+  "median_home_value": 354000.0,
+  "median_home_rate": 1.21,
+  "median_value_growth": 27.86,
+  "median_long_change": 23.03,
+  "share_new": 0.0893,
+  "share_detached": 0.7431,
+  "share_condo_town": 0.1888
  },
  "wards": [
   {
@@ -29,7 +36,14 @@
    "total_tax_2020": 70929499,
    "total_tax_2021": 71455730,
    "share_increase": 0.9512,
-   "share_decrease": 0.0408
+   "share_decrease": 0.0408,
+   "median_home_value": 397000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 36.39,
+   "median_long_change": 40.86,
+   "share_new": 0.0303,
+   "share_detached": 0.7588,
+   "share_condo_town": 0.1334
   },
   {
    "ward": 2,
@@ -42,7 +56,14 @@
    "total_tax_2020": 73798179,
    "total_tax_2021": 73679184,
    "share_increase": 0.8799,
-   "share_decrease": 0.1035
+   "share_decrease": 0.1035,
+   "median_home_value": 247000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 36.91,
+   "median_long_change": 40.42,
+   "share_new": 0.1424,
+   "share_detached": 0.3237,
+   "share_condo_town": 0.5182
   },
   {
    "ward": 3,
@@ -55,7 +76,14 @@
    "total_tax_2020": 60351958,
    "total_tax_2021": 60254373,
    "share_increase": 0.908,
-   "share_decrease": 0.0823
+   "share_decrease": 0.0823,
+   "median_home_value": 209000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 36.69,
+   "median_long_change": 34.23,
+   "share_new": 0.0154,
+   "share_detached": 0.74,
+   "share_condo_town": 0.0608
   },
   {
    "ward": 4,
@@ -68,7 +96,14 @@
    "total_tax_2020": 74616619,
    "total_tax_2021": 74152711,
    "share_increase": 0.9416,
-   "share_decrease": 0.0538
+   "share_decrease": 0.0538,
+   "median_home_value": 229000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 29.2,
+   "median_long_change": 23.39,
+   "share_new": 0.0192,
+   "share_detached": 0.9454,
+   "share_condo_town": 0.0207
   },
   {
    "ward": 5,
@@ -81,7 +116,14 @@
    "total_tax_2020": 83169986,
    "total_tax_2021": 83133593,
    "share_increase": 0.9569,
-   "share_decrease": 0.0379
+   "share_decrease": 0.0379,
+   "median_home_value": 322000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 26.32,
+   "median_long_change": 19.22,
+   "share_new": 0.0689,
+   "share_detached": 0.6104,
+   "share_condo_town": 0.3208
   },
   {
    "ward": 6,
@@ -94,7 +136,14 @@
    "total_tax_2020": 69064808,
    "total_tax_2021": 69379266,
    "share_increase": 0.9557,
-   "share_decrease": 0.0411
+   "share_decrease": 0.0411,
+   "median_home_value": 319000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 26.36,
+   "median_long_change": 20.56,
+   "share_new": 0.0246,
+   "share_detached": 0.7785,
+   "share_condo_town": 0.1797
   },
   {
    "ward": 7,
@@ -107,7 +156,14 @@
    "total_tax_2020": 84608868,
    "total_tax_2021": 85097877,
    "share_increase": 0.9758,
-   "share_decrease": 0.0184
+   "share_decrease": 0.0184,
+   "median_home_value": 307000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 28.3,
+   "median_long_change": 22.35,
+   "share_new": 0.0161,
+   "share_detached": 0.8835,
+   "share_condo_town": 0.0757
   },
   {
    "ward": 8,
@@ -120,7 +176,14 @@
    "total_tax_2020": 65939816,
    "total_tax_2021": 66437614,
    "share_increase": 0.9756,
-   "share_decrease": 0.0216
+   "share_decrease": 0.0216,
+   "median_home_value": 343000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 28.9,
+   "median_long_change": 21.91,
+   "share_new": 0.0734,
+   "share_detached": 0.8308,
+   "share_condo_town": 0.1273
   },
   {
    "ward": 9,
@@ -133,7 +196,14 @@
    "total_tax_2020": 64594805,
    "total_tax_2021": 65103631,
    "share_increase": 0.9886,
-   "share_decrease": 0.0108
+   "share_decrease": 0.0108,
+   "median_home_value": 388000.0,
+   "median_home_rate": 1.11,
+   "median_value_growth": 26.27,
+   "median_long_change": 21.67,
+   "share_new": 0.2962,
+   "share_detached": 0.6175,
+   "share_condo_town": 0.311
   },
   {
    "ward": 10,
@@ -146,7 +216,14 @@
    "total_tax_2020": 99121777,
    "total_tax_2021": 100538417,
    "share_increase": 0.9649,
-   "share_decrease": 0.0346
+   "share_decrease": 0.0346,
+   "median_home_value": 386000.0,
+   "median_home_rate": 1.11,
+   "median_value_growth": 27.33,
+   "median_long_change": 21.93,
+   "share_new": 0.1132,
+   "share_detached": 0.6705,
+   "share_condo_town": 0.251
   },
   {
    "ward": 11,
@@ -159,7 +236,14 @@
    "total_tax_2020": 53874784,
    "total_tax_2021": 54944043,
    "share_increase": 0.9886,
-   "share_decrease": 0.0102
+   "share_decrease": 0.0102,
+   "median_home_value": 399000.0,
+   "median_home_rate": 1.01,
+   "median_value_growth": 24.18,
+   "median_long_change": 23.84,
+   "share_new": 0.2083,
+   "share_detached": 0.6446,
+   "share_condo_town": 0.3384
   },
   {
    "ward": 12,
@@ -172,7 +256,14 @@
    "total_tax_2020": 120259136,
    "total_tax_2021": 121318854,
    "share_increase": 0.9779,
-   "share_decrease": 0.0209
+   "share_decrease": 0.0209,
+   "median_home_value": 531000.0,
+   "median_home_rate": 1.12,
+   "median_value_growth": 24.54,
+   "median_long_change": 21.24,
+   "share_new": 0.1166,
+   "share_detached": 0.7914,
+   "share_condo_town": 0.1969
   },
   {
    "ward": 13,
@@ -185,7 +276,14 @@
    "total_tax_2020": 75494278,
    "total_tax_2021": 76385786,
    "share_increase": 0.9652,
-   "share_decrease": 0.0307
+   "share_decrease": 0.0307,
+   "median_home_value": 459000.0,
+   "median_home_rate": 1.11,
+   "median_value_growth": 24.81,
+   "median_long_change": 22.87,
+   "share_new": 0.0161,
+   "share_detached": 0.834,
+   "share_condo_town": 0.1384
   },
   {
    "ward": 14,
@@ -198,7 +296,14 @@
    "total_tax_2020": 54377167,
    "total_tax_2021": 55093955,
    "share_increase": 0.9957,
-   "share_decrease": 0.0035
+   "share_decrease": 0.0035,
+   "median_home_value": 367000.0,
+   "median_home_rate": 1.21,
+   "median_value_growth": 27.67,
+   "median_long_change": 20.36,
+   "share_new": 0.0528,
+   "share_detached": 0.7564,
+   "share_condo_town": 0.1631
   },
   {
    "ward": 15,
@@ -211,7 +316,14 @@
    "total_tax_2020": 75439469,
    "total_tax_2021": 75971708,
    "share_increase": 0.9731,
-   "share_decrease": 0.0262
+   "share_decrease": 0.0262,
+   "median_home_value": 518000.0,
+   "median_home_rate": 1.1,
+   "median_value_growth": 27.13,
+   "median_long_change": 27.84,
+   "share_new": 0.2006,
+   "share_detached": 0.7117,
+   "share_condo_town": 0.1971
   }
  ],
  "histogram": [
@@ -356,6 +468,19 @@
   "parcels_in_shapefile": 166984,
   "properties_matched_to_parcel": 185676,
   "properties_not_on_map": 627,
-  "parcels_on_map": 163017
+  "parcels_on_map": 163016
+ },
+ "types": {
+  "D": "Detached house",
+  "S": "Semi-detached or link",
+  "T": "Townhouse",
+  "C": "Condo unit",
+  "P": "House with 2 to 6 units",
+  "A": "Apartment building (7+ units)",
+  "V": "Vacant land",
+  "F": "Farm",
+  "B": "Commercial",
+  "I": "Industrial",
+  "O": "Other (institutional, parking, unknown)"
  }
 }

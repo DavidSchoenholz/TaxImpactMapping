@@ -93,10 +93,31 @@ def build(df):
 
     # One record per parcel. Condo parcels hold many units: totals are summed,
     # and the colour uses the typical (median) unit.
+    has_extra = "TYPE" in df
+
+    def med(s, digits):
+        s = s.dropna()
+        return None if s.empty else round(float(s.median()), digits)
+
     def per_parcel(group):
         taxed = group[group["TAXED"]]
         use = taxed if len(taxed) else group
         addresses = group["PROPERTY_ADDRESS"].unique()
+        extra = {}
+        if has_extra:
+            # v = assessed value, e = effective rate (%), k = home type,
+            # g = assessment growth 2016-2021 (%), l = tax change 2011-2021 (%),
+            # y = first year taxed as a building. Condo lots use the typical unit.
+            types = use["TYPE"].dropna()
+            first = group["FIRST"].dropna()
+            extra = {
+                "v": med(use["ASSESSMENT_2021"], 0),
+                "e": med(use["EFF"], 3),
+                "k": types.mode().iloc[0] if len(types) else "O",
+                "g": med(use["GROWTH"], 1),
+                "l": med(use["LONG"], 1),
+                "y": int(first.min()) if len(first) else None,
+            }
         return pd.Series({
             "a": addresses[0] if len(addresses) == 1 else f"{addresses[0]} (+{len(addresses) - 1} more)",
             "w": int(group["WARD"].mode().iloc[0]),
@@ -106,6 +127,7 @@ def build(df):
             "c": round(float(use["DOLLAR_CHANGE_TAXES"].median())),
             "p": round(float(use["PERCENT_CHANGE_TAXES"].median()), 1),
             "x": bool(len(taxed) == 0),
+            **extra,
         })
 
     info = matched.groupby("PARCEL").apply(per_parcel, include_groups=False)
@@ -136,7 +158,14 @@ def build(df):
     for ward, grp in simple.groupby("w"):
         geo = json.loads(grp.to_json(drop_id=True))
         for f in geo["features"]:
-            f["properties"].pop("w", None)
+            props = f["properties"]
+            props.pop("w", None)
+            # Drop empty fields to keep the files small.
+            for k in [k for k, v in props.items() if v is None or (isinstance(v, float) and v != v)]:
+                props.pop(k)
+            for k in ("v", "y"):
+                if k in props:
+                    props[k] = int(props[k])
         (pdir / f"ward-{int(ward)}.json").write_text(json.dumps(geo, separators=(",", ":")))
 
     stats = {

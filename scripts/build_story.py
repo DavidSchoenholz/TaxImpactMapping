@@ -310,12 +310,86 @@ med_home = st.median(float(r["ASSESSMENT_2021"]) for r in homes)
 home_path = [{"year": y, "citywide": round(med_home * sched[y]["RT"]["total_citywide_rate"]),
               "old_hamilton_est": round(A * (sched[y]["RT"]["total_citywide_rate"] + old["area_2021"] / 100))} for y in YEARS]
 
+# ---- The decade: 2011 to 2021 -------------------------------------------
+# Homes taxed in both 2011 and 2021. Tax history comes from data/history/
+# (made by build_data.py); 2011 assessments from the 2012 impact file.
+HOME_TYPE_KEYS = ["D", "S", "T", "C", "P", "A"]
+summary_types = json.loads((ROOT / "data" / "summary.json").read_text()).get("types", {})
+tax_hist = {}
+for path in sorted((ROOT / "data" / "history").glob("ward-*.json")):
+    tax_hist.update(json.loads(path.read_text())["tax"])
+asmt_2011, asmt_2016 = {}, {}
+for r in read_csv("hamilton_tax_impact_2012.csv"):
+    asmt_2011[r["AROLL"].strip()] = float(r["ASSESSM_11"] or 0)
+for r in read_csv("hamilton_tax_impact_2016.csv"):
+    asmt_2016[r["AROLL"].strip()] = float(r["ASSESSM_16"] or 0)
+
+home_rows = [r for r in rows if len(r) > 10 and r[10] in HOME_TYPE_KEYS and r[4] > 0 and r[5] > 0]
+
+
+def tax_change_2011(r):
+    h = tax_hist.get(r[2])
+    return (r[5] / h[0] - 1) * 100 if h and h[0] and h[0] > 0 else None
+
+
+pairs = []  # (value growth 2011-21 %, tax change 2011-21 %, row) for homes standing since 2011
+for r in home_rows:
+    a, t = asmt_2011.get(r[2], 0), tax_change_2011(r)
+    if a > 0 and t is not None and (r[11] or 9999) <= 2011:
+        pairs.append(((r[3] / a - 1) * 100, t, r))
+pairs.sort(key=lambda x: x[0])
+quintiles = []
+for i in range(5):
+    q = pairs[i * len(pairs) // 5:(i + 1) * len(pairs) // 5]
+    quintiles.append({"fifth": i + 1, "n": len(q), "value_growth": round(st.median(x[0] for x in q), 1),
+                      "tax_change": round(st.median(x[1] for x in q), 1)})
+
+by_type = []
+for k in HOME_TYPE_KEYS:
+    g = [r for r in home_rows if r[10] == k]
+    if not g:
+        continue
+    t = [x for x in (tax_change_2011(r) for r in g) if x is not None]
+    v11 = [(r[3] / asmt_2011[r[2]] - 1) * 100 for r in g if asmt_2011.get(r[2], 0) > 0]
+    v16 = [(r[3] / asmt_2016[r[2]] - 1) * 100 for r in g if asmt_2016.get(r[2], 0) > 0]
+    by_type.append({"key": k, "label": summary_types.get(k, k), "n": len(g),
+                    "median_bill": st.median(r[5] for r in g), "median_value": st.median(r[3] for r in g),
+                    "tax_change": round(st.median(t), 1) if t else None,
+                    "value_growth_2011": round(st.median(v11), 1) if v11 else None,
+                    "value_growth_2016": round(st.median(v16), 1) if v16 else None,
+                    "share_new": round(sum(1 for r in g if (r[11] or 0) >= 2013) / len(g), 3),
+                    "share_lower_city": round(sum(1 for r in g if r[1] in (1, 2, 3, 4)) / len(g), 3)})
+
+new_homes = [r for r in home_rows if (r[11] or 0) >= 2013]
+old_homes = [r for r in home_rows if (r[11] or 9999) <= 2011]
+winona = next((t for t in tiers if t["key"] == "1.04-1.11"), None)
+winona_rows = [r for r in home_rows if r[3] > 50000 and r[4] > 0
+               and f"{round(r[4] / r[3] * 100, 2):g}-{round(r[5] / r[3] * 100, 2):g}" == "1.04-1.11"]
+decade = {
+    "home_tax_change": round(st.median(x for x in (tax_change_2011(r) for r in home_rows) if x is not None), 1),
+    "home_value_growth": round(st.median(x[0] for x in pairs), 1),
+    "homes_compared": len(pairs),
+    "quintiles": quintiles,
+    "by_type": by_type,
+    "new": {
+        "n": len(new_homes), "share": round(len(new_homes) / len(home_rows), 3),
+        "median_bill": st.median(r[5] for r in new_homes), "median_bill_old": st.median(r[5] for r in old_homes),
+        "median_value": st.median(r[3] for r in new_homes), "median_value_old": st.median(r[3] for r in old_homes),
+        "median_rate": round(st.median(r[5] / r[3] * 100 for r in new_homes if r[3] > 0), 3),
+        "median_rate_old": round(st.median(r[5] / r[3] * 100 for r in old_homes if r[3] > 0), 3),
+        "by_year": sorted(Counter(r[11] for r in new_homes).items()),
+        "by_area": [[MUNI_NAME.get(m, "?"), n] for m, n in Counter(muni_of.get(r[2], "") for r in new_homes).most_common()],
+        "by_type": [[summary_types.get(k, k), n] for k, n in Counter(r[10] for r in new_homes).most_common()],
+        "winona_existing_2011": round(sum(1 for r in winona_rows if (r[11] or 9999) <= 2011) / len(winona_rows), 3) if winona_rows else None,
+    },
+}
+
 mt_rows = [r for r in class_rows if r["TAX_CLASS_PRIMARY"] == "MT" and float(r["TOTAL_TAXES_2020"] or 0) > 0 and float(r["TOTAL_TAXES_2021"] or 0) > 0]
 checks = {"multi_n": len(mt_rows), "multi_zero": sum(1 for r in mt_rows if float(r["PERCENT_CHANGE_TAXES"] or 0) == 0)}
 
 out = {"classes": classes, "less_by_class": less_by_class, "rate_change_2021": rate_change_2021,
        "rate_index": rate_index, "annual": annual, "totals": totals, "groups": groups, "deciles": deciles, "hist": hist, "extremes": extremes,
        "levy": levy, "education_cut": education_cut, "ratios": ratios, "ratio_effect": ratio_effect, "tiers": tiers,
-       "bridge": bridge, "home_path": home_path, "median_home": med_home, "checks": checks}
+       "bridge": bridge, "home_path": home_path, "median_home": med_home, "checks": checks, "decade": decade}
 (ROOT / "data" / "story.json").write_text(json.dumps(out, separators=(",", ":")))
 print("wrote data/story.json and data/classes.json")

@@ -47,12 +47,30 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-// What the map can be coloured by. `ward` is the column in summary.json.
+// What the map can be coloured by. `ward` is the column in summary.json;
+// `lot` titles the legend when individual properties are shown.
+const fmtRate = (v) => v.toFixed(2) + "%";
 const MEASURES = {
-  pct:     { label: "% change",  ward: "median_percent_change", title: "Typical % change in bill",         fmt: fmtSignedPercent },
-  dollars: { label: "$ change",  ward: "median_dollar_change",  title: "Typical $ change in bill",         fmt: fmtSignedDollars },
-  bill:    { label: "2021 bill", ward: "median_tax_2021",       title: "Typical 2021 tax bill",            fmt: fmtDollars },
-  less:    { label: "Paid less", ward: "share_decrease",        title: "Share of properties paying less",  fmt: fmtShare },
+  pct:     { group: "The 2021 change", label: "% change in bill", ward: "median_percent_change", title: "Typical % change in bill", fmt: fmtSignedPercent,
+             lot: "Change in bill, 2020 to 2021", desc: "How much each bill changed in 2021, in percent. Area-rate tiers show up as patches." },
+  dollars: { group: "The 2021 change", label: "$ change in bill", ward: "median_dollar_change", title: "Typical $ change in bill", fmt: fmtSignedDollars,
+             lot: "Change in bill, 2020 to 2021", desc: "How much each bill changed in 2021, in dollars. Bigger, pricier properties change by more." },
+  less:    { group: "The 2021 change", label: "Paid less in 2021", ward: "share_decrease", title: "Share of properties paying less", fmt: fmtShare,
+             lot: "Paid less in 2021?", desc: "Properties whose bill went down in 2021. Mostly commercial and industrial strips." },
+  value:   { group: "The property", label: "Assessed value", ward: "median_home_value", title: "Typical home's assessed value", fmt: fmtDollars,
+             lot: "Assessed value (2016 valuation)", desc: "What MPAC says the property was worth on January 1, 2016, the value used for 2017 to 2021 taxes. Condo lots show the typical unit." },
+  bill:    { group: "The property", label: "2021 tax bill", ward: "median_tax_2021", title: "Typical 2021 tax bill", fmt: fmtDollars,
+             lot: "2021 tax bill (per unit)", desc: "The 2021 bill. Condo lots show the typical unit." },
+  rate:    { group: "The property", label: "Tax rate (bill ÷ value)", ward: "median_home_rate", title: "Typical home's tax rate", fmt: fmtRate,
+             lot: "Tax rate: bill as % of value", desc: "Each bill divided by its assessed value. Homes fall into area tiers (Question 3); apartments and businesses pay far higher rates." },
+  type:    { group: "The property", label: "Home type", ward: "share_condo_town", title: "Share of homes that are condos or townhouses", fmt: fmtShare,
+             lot: "Property type", desc: "Detached, semi, townhouse, condo and more, from the MPAC property code. Ward view: the share of homes that are condos or townhouses." },
+  growth:  { group: "Over time", label: "Value growth, 2016 reassessment", ward: "median_value_growth", title: "Typical assessment growth, 2016 to 2021", fmt: fmtSignedPercent,
+             lot: "Assessment growth, 2016 to 2021", desc: "How much each assessment rose as the 2016 reassessment was phased in. Faster than average means a growing share of the tax bill." },
+  long:    { group: "Over time", label: "Tax change since 2011", ward: "median_long_change", title: "Typical tax change, 2011 to 2021", fmt: fmtSignedPercent,
+             lot: "Tax bill change, 2011 to 2021", desc: "Ten years of change in each bill, for properties taxed in both 2011 and 2021 (Question 7)." },
+  new:     { group: "Over time", label: "Newer homes", ward: "share_new", title: "Share of properties first taxed after 2012", fmt: fmtShare,
+             lot: "First year taxed as a building", desc: "When each property first shows up in the tax data as a building. A stand-in for age: the data starts in 2011, so everything older looks the same." },
 };
 
 // ---------- start-up ---------------------------------------------------
@@ -72,6 +90,9 @@ async function init() {
       "instead, or see the README for how to preview it locally.";
     return;
   }
+  // ?m=<measure> in the address opens the map on that measure (for sharing a view).
+  const asked = new URLSearchParams(location.search).get("m");
+  if (MEASURES[asked]) state.measure = asked;
   if (!MEASURES[state.measure]) state.measure = "pct";
 
   Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
@@ -85,6 +106,9 @@ async function init() {
   renderRatios();
   renderExtremes();
   renderHistory();
+  renderDecade();
+  renderTypes();
+  renderNewHomes();
   renderOpenQuestions();
   renderTable();
   initLookup();
@@ -105,7 +129,7 @@ async function init() {
 
   // Redraw in the right colours when the device switches light/dark.
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-    renderLess(); renderClusters(); renderRatios(); renderHistory();
+    renderLess(); renderClusters(); renderRatios(); renderHistory(); renderDecade();
     if (state.mapLayer) { styleMap(); restyleParcels(); }
   });
 
@@ -479,6 +503,93 @@ function renderRatios() {
     `A common argument for lowering the apartment ratio is that apartment taxes are passed on to tenants in rent. Whatever the merits, this cost to homeowners never appears in the increase announced each year.`;
 }
 
+// ---------- 7. the decade ---------------------------------------------
+
+// Canada's consumer price index rose about 18% from 2011 to 2021 (annual averages, Statistics Canada).
+const CPI_2011_2021 = 18;
+
+function renderDecade() {
+  const d = state.story.decade, q = d.quintiles, lo = q.at(0), hi = q.at(-1);
+  const wards = [...state.summary.wards].filter((w) => w.median_long_change != null).sort((a, b) => b.median_long_change - a.median_long_change);
+  $("decade-answer").innerHTML =
+    `<strong>Short answer:</strong> homes whose value grew fastest. From 2011 to 2021 the typical home's bill rose ${d.home_tax_change}%, ` +
+    `a little more than inflation (about ${CPI_2011_2021}%). But the fifth of homes whose value grew most saw their bills rise ${hi.tax_change}%, ` +
+    `while the fifth whose value grew least saw ${lo.tax_change}%.`;
+  $("decade-lede").textContent =
+    `Property tax divides the City's levy by value. Each reassessment re-sorts everyone: a home whose value rises faster than the city's ` +
+    `takes on a bigger share of the bill, and one that rises slower sheds some, even if the rate never changed. ` +
+    `Over the decade the typical home's assessed value rose ${d.home_value_growth}%, through two reassessments (2012 and 2016), each phased in over four years.`;
+  makeChart("decade", $("decade-chart"), {
+    type: "bar",
+    data: {
+      labels: q.map((x) => [`Value +${Math.round(x.value_growth)}%`, x.fifth === 1 ? "slowest fifth" : x.fifth === 5 ? "fastest fifth" : `fifth ${x.fifth}`]),
+      datasets: [{ data: q.map((x) => x.tax_change), backgroundColor: q.map((x) => (x.fifth === 5 ? css("--increase") : css("--no-change"))), borderRadius: 4 }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (it) => { const x = q.at(it.dataIndex); return `Bills ${fmtSignedPercent(x.tax_change)} (${fmtCount(x.n)} homes)`; } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: css("--text-muted") } },
+        y: { beginAtZero: true, grid: { color: css("--line") }, ticks: { color: css("--text-muted"), callback: (v) => "+" + v + "%" } },
+      },
+    },
+  });
+  $("decade-note").textContent = `Median for each fifth of ${fmtCount(d.homes_compared)} homes taxed in both 2011 and 2021, sorted by assessed-value growth over the same years.`;
+  const top3 = wards.slice(0, 3), bottom3 = wards.slice(-3);
+  const card = (w) => `<li><span>${escapeHtml(wardLabel(w.ward))}</span><strong>${fmtSignedPercent(w.median_long_change)}</strong></li>`;
+  $("decade-wards").innerHTML =
+    `<div class="card"><div class="what">Fastest-rising wards, bill change 2011 to 2021</div><ul class="mini-list">${top3.map(card).join("")}</ul></div>` +
+    `<div class="card"><div class="what">Slowest-rising wards</div><ul class="mini-list">${bottom3.map(card).join("")}</ul></div>`;
+  $("decade-callout").innerHTML =
+    `<strong>Is that unfair?</strong> It is how the system is designed: tax follows value. But it means the neighbourhoods whose values climbed fastest, ` +
+    `mostly the lower city (Wards ${top3.map((w) => w.ward).join(", ").replace(/, (\d+)$/, " and $1")}), carry a growing share of the levy whether or not the people living there earn more. ` +
+    `Phase-ins slow the climb; they don't change where it ends. Use "Tax change since 2011" on the map to see it street by street.`;
+}
+
+// ---------- 8. home types ----------------------------------------------
+
+function renderTypes() {
+  const d = state.story.decade, t = d.by_type.filter((x) => x.n >= 500);
+  const get = (k) => t.find((x) => x.key === k);
+  const C = get("C"), D = get("D"), T = get("T"), P = get("P");
+  $("types-answer").innerHTML =
+    `<strong>Short answer:</strong> not in any one year: every home in an area pays the same rate per dollar of value. ` +
+    `Over a decade, yes, because their values grew at different speeds. Since 2011, condo bills rose ${C.tax_change}%, detached houses ${D.tax_change}%, ` +
+    `townhouses ${T.tax_change}% and houses split into 2 to 6 units ${P.tax_change}%.`;
+  $("types-table").innerHTML =
+    `<thead><tr><th>Home type</th><th>Homes</th><th>Typical value</th><th>Typical 2021 bill</th><th>Value growth 2011–2021</th><th>Bill change 2011–2021</th><th>First taxed after 2012</th></tr></thead><tbody>` +
+    [...t].sort((a, b) => b.tax_change - a.tax_change).map((x) => `<tr><td><i class="swatch" style="background:var(--type-${x.key})"></i>${escapeHtml(x.label)}</td><td>${fmtCount(x.n)}</td><td>${fmtDollars(x.median_value)}</td>` +
+      `<td>${fmtDollars(x.median_bill)}</td><td>${fmtSignedPercent(x.value_growth_2011)}</td><td><strong>${fmtSignedPercent(x.tax_change)}</strong></td><td>${fmtShare(x.share_new)}</td></tr>`).join("") + `</tbody>`;
+  $("types-callout").innerHTML =
+    `<strong>Why condos lag and plexes lead.</strong> Condo values rose ${C.value_growth_2011}% over the decade, against ${P.value_growth_2011}% for houses with 2 to 6 units, ` +
+    `${fmtShare(P.share_lower_city)} of them in Wards 1 to 4 in the lower city, and almost none built since 2011. Many are rentals, so some of that increase may reach tenants through rent. ` +
+    `Home types come from the MPAC property code; "Home type" on the map shows them lot by lot.`;
+}
+
+// ---------- 9. newer homes ---------------------------------------------
+
+function renderNewHomes() {
+  const n = state.story.decade.new;
+  const town = state.story.decade.by_type.find((x) => x.key === "T");
+  $("new-answer").innerHTML =
+    `<strong>Short answer:</strong> bigger bills, lower rates. The ${fmtCount(n.n)} homes first taxed after 2012 pay a typical ${fmtDollars(n.median_bill)}, ` +
+    `against ${fmtDollars(n.median_bill_old)} for older homes, because they are worth more. But they pay less per dollar of value ` +
+    `(${n.median_rate.toFixed(2)}% against ${n.median_rate_old.toFixed(2)}%), because most were built outside the old City of Hamilton, where area rates are lower.`;
+  const stats = [
+    { num: fmtShare(n.share), what: "of homes were first taxed after 2012", more: `${fmtCount(n.n)} homes` },
+    { num: "$" + Math.round(n.median_value / 1000) + "k", what: "typical value of a newer home", more: `older homes: $${Math.round(n.median_value_old / 1000)}k` },
+    { num: fmtShare(town.share_new), what: "of townhouses are newer", more: "more than any other home type" },
+  ];
+  $("new-stats").innerHTML = stats.map((x) => `<div class="bigstat"><div class="num">${x.num}</div><div class="what">${x.what}</div><div class="more">${x.more}</div></div>`).join("");
+  const list = (rows) => rows.slice(0, 4).map(([k, v]) => `${k} (${fmtCount(v)})`).join(", ");
+  $("new-lede").textContent =
+    `Where they are: ${list(n.by_area)}. What they are: ${list(n.by_type)}. ` +
+    `"First taxed" is the first year a property appears in the tax data as a building, so it stands in for age only after 2011.`;
+  $("new-callout").innerHTML =
+    `<strong>Was the 2021 jump in eastern Stoney Creek about new subdivisions?</strong> No. ${fmtShare(n.winona_existing_2011)} of the homes that moved up a tier there ` +
+    `were already taxed as buildings in 2011. The change was to the area, not the houses.`;
+}
+
 // ---------- open questions ---------------------------------------------
 
 function renderOpenQuestions() {
@@ -632,9 +743,11 @@ const wardOf = (feature) => Number(feature.properties[CONFIG.MAP.joinField]);
 
 async function initMap() {
   // Controls first, so they work as soon as the map is up.
-  $("measure-seg").innerHTML = Object.entries(MEASURES)
-    .map(([k, m]) => `<button type="button" data-m="${k}">${m.label}</button>`).join("");
-  $("measure-seg").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => setMeasure(b.dataset.m)));
+  const groups = [...new Set(Object.values(MEASURES).map((m) => m.group))];
+  $("measure-select").innerHTML = groups.map((g) => `<optgroup label="${escapeHtml(g)}">` +
+    Object.entries(MEASURES).filter(([, m]) => m.group === g).map(([k, m]) => `<option value="${k}">${escapeHtml(m.label)}</option>`).join("") +
+    `</optgroup>`).join("");
+  $("measure-select").addEventListener("change", (e) => setMeasure(e.target.value));
   $("view-seg").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
   renderRank();
 
@@ -700,7 +813,8 @@ function setMeasure(key) {
 }
 
 function syncControls() {
-  $("measure-seg").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.m === state.measure)));
+  $("measure-select").value = state.measure;
+  $("measure-desc").textContent = MEASURES[state.measure].desc;
   const lots = !!showingLots();
   $("view-seg").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.view === "lots") === lots)));
 }
@@ -752,7 +866,7 @@ function styleMap() {
   });
 
   if (lots) {
-    setLegend(m.title.replace("Typical", "Each property:"), lotClasses().filter((c) => !c.hide).map((c) => [c.colour, c.label]));
+    setLegend(m.lot, lotClasses().filter((c) => !c.hide).map((c) => [c.colour, c.label]));
   } else {
     const step = (scale.max - scale.min) / scale.steps;
     setLegend(m.title, scale.palette.map((col, i) => [col, `${m.fmt(scale.min + i * step)} – ${m.fmt(scale.min + (i + 1) * step)}`]));
@@ -800,6 +914,11 @@ function renderWardDetail() {
       <dt>Typical change</dt><dd>${fmtSignedDollars(d.median_dollar_change)} (${fmtSignedPercent(d.median_percent_change)})</dd>
       <dt>Paying less</dt><dd>${fmtShare(d.share_decrease)} <span class="muted">(city ${fmtShare(c.share_decrease)})</span></dd>
       <dt>Total tax change</dt><dd>${signed(fmtMoneyShort(d.total_tax_2021 - d.total_tax_2020), d.total_tax_2021 - d.total_tax_2020)}</dd>
+      ${d.median_home_value != null ? `<dt>Typical home value</dt><dd>${fmtDollars(d.median_home_value)}</dd>
+      <dt>Typical home tax rate</dt><dd>${fmtRate(d.median_home_rate)}</dd>
+      <dt>Bill change since 2011</dt><dd>${fmtSignedPercent(d.median_long_change)} <span class="muted">(homes ${fmtSignedPercent(state.story.decade.home_tax_change)})</span></dd>
+      <dt>Detached share of homes</dt><dd>${fmtShare(d.share_detached)}</dd>
+      <dt>First taxed after 2012</dt><dd>${fmtShare(d.share_new)}</dd>` : ""}
     </dl>`;
 }
 
@@ -843,6 +962,49 @@ function lotClasses() {
       { test: (p) => p.c <= b[2], colour: up[2], label: `${fmtDollars(b[1])} to ${fmtDollars(b[2])} more` },
       { test: () => true, colour: up[3], label: `More than ${fmtDollars(b[2])} more` }];
   }
+  const ramp = (breaks, cols, value, fmt, unit) => [noTax,
+    { test: (p) => value(p) == null, colour: none, label: "No data", hide: true },
+    ...breaks.map((lim, i) => ({
+      test: (p) => value(p) < lim, colour: cols.at(i),
+      label: i === 0 ? `Under ${fmt(lim)}${unit}` : `${fmt(breaks.at(i - 1))} to ${fmt(lim)}${unit}`,
+    })),
+    { test: () => true, colour: cols.at(breaks.length), label: `${fmt(breaks.at(-1))}${unit} or more` }];
+  const blues = [1, 2, 3, 4, 6, 7].map((i) => css(`--map-${i}`));
+  const reds = [1, 2, 3, 4, 5].map((i) => css(`--lot-up-${i}`));
+  const plusPct = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + "%";
+  if (m === "value") {
+    const k = (v) => "$" + v / 1000 + "k";
+    return ramp(B.valueBreaks, blues, (p) => p.v, k, "");
+  }
+  if (m === "rate") {
+    const rows = ramp([1.03, 1.09, 1.11, 1.15, 1.3], blues, (p) => p.e, (v) => v.toFixed(2) + "%", "");
+    const notes = ["", "", " (mostly rural)", "", " (Waterdown, Stoney Creek, Dundas)", " (Ancaster, Mount Hope)", " (old City of Hamilton)", " (apartments, businesses)"];
+    return rows.map((r, i) => (r.hide ? r : { ...r, label: r.label + (notes.at(i) || "") }));
+  }
+  if (m === "type") {
+    const types = state.summary.types || {};
+    return [noTax, ...["D", "S", "T", "C", "P", "A", "V", "F", "B", "I", "O"].map((k) => ({
+      test: (p) => (p.k || "O") === k, colour: css(`--type-${k}`), label: types[k] || k,
+    }))];
+  }
+  if (m === "growth") {
+    return [noTax, { test: (p) => p.g == null, colour: none, label: "No data", hide: true },
+      { test: (p) => p.g < 0, colour: down, label: "Value went down" },
+      ...ramp([20, 27, 34, 40], reds, (p) => p.g, plusPct, "").slice(2)];
+  }
+  if (m === "long") {
+    return [noTax, { test: (p) => p.l == null, colour: none, label: "Not taxed in 2011", hide: true },
+      { test: (p) => p.l < 0, colour: down, label: "Lower than in 2011" },
+      ...ramp([15, 22, 30, 40], reds, (p) => p.l, plusPct, "").slice(2)];
+  }
+  if (m === "new") {
+    return [noTax,
+      { test: (p) => p.y == null, colour: none, label: "No data", hide: true },
+      { test: (p) => p.y <= 2011, colour: css("--lot-none"), label: "Taxed as a building by 2011" },
+      { test: (p) => p.y <= 2016, colour: css("--map-3"), label: "First taxed 2012 to 2016" },
+      { test: (p) => p.y <= 2019, colour: css("--map-5"), label: "First taxed 2017 to 2019" },
+      { test: () => true, colour: css("--map-7"), label: "First taxed 2020 or 2021" }];
+  }
   // bill: dark = big bill
   const b = B.billBreaks;
   const cols = [2, 3, 4, 6, 7].map((i) => css(`--map-${i}`));
@@ -875,7 +1037,16 @@ function parcelPopup(p) {
   const units = p.n > 1
     ? `<br>${fmtCount(p.n)} units on this lot. Typical unit: ${fmtSignedDollars(p.c)} (${fmtSignedPercent(p.p)})<br>All units: ${fmtDollars(p.t0)} → ${fmtDollars(p.t1)}`
     : `<br>${y0}: ${fmtDollars(p.t0)} → ${y1}: ${fmtDollars(p.t1)}<br>Change: <strong>${fmtSignedDollars(p.c)} (${fmtSignedPercent(p.p)})</strong>`;
-  return `<strong>${escapeHtml(p.a)}</strong>${units}${tag}`;
+  const types = state.summary.types || {};
+  const more = [
+    p.k && types[p.k] ? types[p.k] : null,
+    p.v != null ? `Assessed at ${fmtDollars(p.v)}${p.n > 1 ? " (typical unit)" : ""}` : null,
+    p.e != null ? `Tax rate ${p.e.toFixed(3)}% of value` : null,
+    p.g != null ? `Value growth 2016–2021: ${fmtSignedPercent(p.g)}` : null,
+    p.l != null ? `Bill change since 2011: ${fmtSignedPercent(p.l)}` : null,
+    p.y != null && p.y > 2011 ? `First taxed as a building: ${p.y}` : null,
+  ].filter(Boolean);
+  return `<strong>${escapeHtml(p.a)}</strong>${units}${tag}` + (more.length ? `<div class="popup-more">${more.map(escapeHtml).join("<br>")}</div>` : "");
 }
 
 function loadWardParcels(ward) {
@@ -1039,6 +1210,35 @@ async function randomProperty() {
   showReceipt(p);
 }
 
+const historyCache = {};
+
+// Ten years of this property's bills, drawn as a small line.
+async function showHistory(p) {
+  const [, ward, roll] = p;
+  const el = $("receipt-history");
+  if (!el || !ward) return;
+  if (!historyCache[ward]) historyCache[ward] = fetch(`data/history/ward-${ward}.json`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const h = await historyCache[ward];
+  const series = h && h.tax[roll];
+  if (!series || $("receipt-history") !== el) return;
+  const pts = h.years.map((y, i) => [y, series.at(i)]).filter(([, v]) => v != null && v > 0);
+  if (pts.length < 3) return;
+  const W = 520, H = 90, x0 = pts.at(0)[0], x1 = pts.at(-1)[0];
+  const vals = pts.map(([, v]) => v), lo = Math.min(...vals), hi = Math.max(...vals);
+  const X = (y) => 8 + ((y - x0) / (x1 - x0 || 1)) * (W - 16), Y = (v) => H - 18 - ((v - lo) / (hi - lo || 1)) * (H - 36);
+  const line = pts.map(([y, v], i) => `${i ? "L" : "M"}${X(y).toFixed(1)} ${Y(v).toFixed(1)}`).join(" ");
+  const first = pts.at(0), last = pts.at(-1), change = (last[1] / first[1] - 1) * 100;
+  const typical = state.story.decade.home_tax_change;
+  el.innerHTML = `<p class="history-title">Your bill since ${first[0]}: <strong>${fmtSignedPercent(change)}</strong>` +
+    (first[0] === 2011 ? ` <span class="muted">(typical home ${fmtSignedPercent(typical)})</span>` : "") + `</p>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tax bill by year">
+      <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      ${pts.map(([y, v]) => `<circle cx="${X(y)}" cy="${Y(v)}" r="3" fill="var(--accent)"><title>${y}: ${fmtDollars(v)}</title></circle>`).join("")}
+      <text x="${X(first[0])}" y="${H - 2}" font-size="11" fill="var(--text-muted)">${first[0]}: ${fmtDollars(first[1])}</text>
+      <text x="${X(last[0])}" y="${H - 2}" font-size="11" text-anchor="end" fill="var(--text-muted)">${last[0]}: ${fmtDollars(last[1])}</text>
+    </svg>`;
+}
+
 function showReceipt(p) {
   const [address, ward, roll, assessment, t0, t1, change, pct, lat, lon] = p;
   const y0 = CONFIG.yearBefore, y1 = CONFIG.yearAfter;
@@ -1048,12 +1248,14 @@ function showReceipt(p) {
   const code = state.classes ? (state.classes.rolls[roll] || "RT") : null;
   const fam = code ? (state.classes.family[code] || "other") : null;
   const famLabel = code && fam !== "other" ? state.classes.labels[fam] : "";
+  const homeType = p[10] && state.summary.types ? state.summary.types[p[10]] : "";
+  const placeLabel = homeType && !["O"].includes(p[10]) ? homeType : famLabel;
   const el = $("receipt");
   history.replaceState(null, "", `#p=${roll}`);
 
   let inner;
   if (!taxed) {
-    inner = `<h3>${escapeHtml(address)}</h3><p class="where">${wardLabel(ward)}${famLabel ? " · " + famLabel : ""} · Roll ${escapeHtml(roll)}</p>
+    inner = `<h3>${escapeHtml(address)}</h3><p class="where">${wardLabel(ward)}${placeLabel ? " · " + escapeHtml(placeLabel) : ""} · Roll ${escapeHtml(roll)}</p>
       <p class="verdict">This property was not billed property tax in ${y0} or ${y1} (${t0 + t1 === 0 ? "no tax in either year" : "tax in only one year"}), so there is no change to compare.</p>`;
   } else {
     const key = groupOf(change, pct);
@@ -1078,12 +1280,13 @@ function showReceipt(p) {
     const pos = Math.min(97, Math.max(3, below * 100));
 
     inner = `<h3>${escapeHtml(address)}</h3>
-      <p class="where">${wardLabel(ward)}${famLabel ? " · " + famLabel : ""} · Roll ${escapeHtml(roll)} · Assessed at ${fmtDollars(assessment)}</p>
+      <p class="where">${wardLabel(ward)}${placeLabel ? " · " + escapeHtml(placeLabel) : ""} · Roll ${escapeHtml(roll)} · Assessed at ${fmtDollars(assessment)}</p>
       <div class="big"><span class="num ${change > 0 ? "up" : change < 0 ? "down" : ""}">${fmtSignedDollars(change)}</span><span class="sub">a year (${fmtSignedPercent(pct)})</span></div>
       <div class="bills"><span>${y0}: <strong>${fmtDollars(t0)}</strong></span><span class="arrow">→</span><span>${y1}: <strong>${fmtDollars(t1)}</strong></span></div>
       <p class="verdict">${verdict}</p>
       <div class="track" aria-hidden="true"><span class="dot" style="left:${pos}%" data-label="Bigger rise than ${rank}% of properties" data-edge="${pos > 70 ? "r" : pos < 30 ? "l" : ""}"></span></div>
       <div class="track-labels"><span>Biggest decrease</span><span>Dollar change, all taxed properties</span><span>Biggest increase</span></div>
+      <div class="history" id="receipt-history"></div>
       <p class="note">Typical change: ${fmtSignedDollars(city.median_dollar_change)} city-wide${wardStats ? `, ${fmtSignedDollars(wardStats.median_dollar_change)} in ${wardLabel(ward)}` : ""}.</p>`;
   }
   el.hidden = false;
@@ -1097,6 +1300,7 @@ function showReceipt(p) {
     e.target.textContent = "Link copied";
   });
 
+  if (taxed) showHistory(p);
   if (ward !== state.selectedWard) selectWard(ward, { only: true });
   if (lat != null) showOnMap(lat, lon, address, false);
 }

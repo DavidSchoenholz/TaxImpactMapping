@@ -30,7 +30,7 @@
       <div id="receipt" class="receipt" hidden></div>
 
       <nav class="toc" aria-label="Questions this page answers">
-        <p class="toc-title">Six questions this page answers</p>
+        <p class="toc-title">Nine questions this page answers</p>
         <ol>
           <li><a href="#q1">Taxes went up about 2%. Is that what happened?</a></li>
           <li><a href="#q2">Did businesses get a break at homeowners' expense?</a></li>
@@ -38,6 +38,9 @@
           <li><a href="#q4">If the rate rose 2.5%, why did bills rise 1.7%?</a></li>
           <li><a href="#q5">Who is quietly paying more each year?</a></li>
           <li><a href="#q6">Was 2021 a normal year?</a></li>
+          <li><a href="#q7">Whose taxes grew most over the decade?</a></li>
+          <li><a href="#q8">Do houses, townhouses and condos fare differently?</a></li>
+          <li><a href="#q9">Are newer subdivisions paying more?</a></li>
         </ol>
       </nav>
     </div>
@@ -121,16 +124,17 @@
       <div class="wrap wide">
         <p class="eyebrow">Explore</p>
         <h2 id="h-map">See it street by street</h2>
-        <p class="lede">Zoom in until every property lot appears. Try "% change" and zoom into eastern Stoney Creek or Waterdown: the tiers from Question 3 show up as patches of colour.</p>
+        <p class="lede">Pick what the colours mean, then zoom in until every property lot appears. Try "Tax rate" to see the area tiers from Question 3, "Tax change since 2011" to see Question 7's decade, or "Home type" to see how neighbourhoods are built.</p>
 
         <div class="toolbar">
-          <div class="seg" role="group" aria-label="Colour the map by" id="measure-seg"></div>
+          <label class="picker">Colour by <select id="measure-select"></select></label>
           <div class="seg" role="group" aria-label="Map level" id="view-seg">
             <button type="button" data-view="wards">Wards</button>
             <button type="button" data-view="lots">Every property</button>
           </div>
         </div>
 
+        <p class="note measure-desc" id="measure-desc"></p>
         <div class="map-layout">
           <div class="map-wrap">
             <div id="map-slot"><div id="map" role="region" aria-label="Map of Hamilton wards and properties"></div></div>
@@ -190,6 +194,48 @@
         </div>
         <p class="callout" id="home-path"></p>
         <p class="note" id="history-note"></p>
+      </div>
+    </section>
+
+    <!-- ============ Q7. THE DECADE ============ -->
+    <section class="story alt" id="q7" aria-labelledby="h-decade">
+      <div class="wrap">
+        <p class="eyebrow">Question 7</p>
+        <h2 id="h-decade">Whose taxes grew most over the past decade?</h2>
+        <p class="answer" id="decade-answer"></p>
+        <p class="lede" id="decade-lede"></p>
+        <div class="split">
+          <div class="card">
+            <h3 class="chart-title">Bill change 2011 to 2021, by how fast the home's value grew</h3>
+            <div class="chart-box"><canvas id="decade-chart" role="img" aria-label="Bar chart: tax bill change 2011 to 2021 for each fifth of homes by value growth"></canvas></div>
+            <p class="note" id="decade-note"></p>
+          </div>
+          <div class="contrast" id="decade-wards"></div>
+        </div>
+        <p class="callout" id="decade-callout"></p>
+      </div>
+    </section>
+
+    <!-- ============ Q8. HOME TYPES ============ -->
+    <section class="story" id="q8" aria-labelledby="h-types">
+      <div class="wrap">
+        <p class="eyebrow">Question 8</p>
+        <h2 id="h-types">Do houses, townhouses and condos fare differently?</h2>
+        <p class="answer" id="types-answer"></p>
+        <div class="card table-scroll"><table id="types-table"></table></div>
+        <p class="callout" id="types-callout"></p>
+      </div>
+    </section>
+
+    <!-- ============ Q9. NEWER HOMES ============ -->
+    <section class="story alt" id="q9" aria-labelledby="h-new">
+      <div class="wrap">
+        <p class="eyebrow">Question 9</p>
+        <h2 id="h-new">Are newer subdivisions paying more?</h2>
+        <p class="answer" id="new-answer"></p>
+        <div class="bigstats" id="new-stats"></div>
+        <p class="lede" id="new-lede"></p>
+        <p class="callout" id="new-callout"></p>
       </div>
     </section>
 

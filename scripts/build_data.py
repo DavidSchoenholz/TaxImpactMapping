@@ -12,6 +12,11 @@ from pathlib import Path
 
 import pandas as pd
 
+try:
+    import history
+except ImportError:
+    history = None
+
 ROOT = Path(__file__).resolve().parent.parent
 RAW_CSV = ROOT / "data" / "raw" / "hamilton_tax_impact_2021.csv"
 OUT_DIR = ROOT / "data"
@@ -38,6 +43,18 @@ def load():
     # kept for lookup but left out of the statistics.
     df["TAXED"] = (df["TAXES_2020"] > 0) & (df["TAXES_2021"] > 0) & (df["WARD"] > 0)
 
+    # Class, home type and history from data/source/, when present.
+    if history and history.available():
+        df = df.join(history.load(), on="ROLL_NO")
+        a21 = df["ASSESSMENT_2021"].where(df["ASSESSMENT_2021"] > 0)
+        df["EFF"] = (df["TAXES_2021"] / a21 * 100).where(df["TAXED"])
+        df["GROWTH"] = (df["ASSESSMENT_2021"] / df["ASMT_2016"].where(df["ASMT_2016"] > 0) - 1) * 100
+        df["LONG"] = ((df["TAXES_2021"] / df["TAX_2011"].where(df["TAX_2011"] > 0) - 1) * 100).where(df["TAXED"])
+        # Properties not in any earlier file: first taxed as a building in 2020 or 2021.
+        new = df["FIRST"].isna() & df["TAXED"] & (df["TYPE"] != "V")
+        df.loc[new, "FIRST"] = 2021
+        df.loc[new & (df["TAXES_2020"] > 0), "FIRST"] = 2020
+
     notes = {
         "rows_in_csv": rows_in,
         "rows_after_cleaning": len(df),
@@ -45,6 +62,26 @@ def load():
         "untaxed_or_unassigned": int((~df["TAXED"]).sum()),
     }
     return df, notes
+
+
+HOME_KEYS = ["D", "S", "T", "C", "P"]
+
+
+def extras(group):
+    """Ward-level figures that need the class and history files."""
+    if "TYPE" not in group:
+        return {}
+    homes = group[group["TYPE"].isin(HOME_KEYS) & group["EFF"].notna()]
+    med = lambda s: None if s.dropna().empty else round(float(s.median()), 2)
+    return {
+        "median_home_value": med(homes["ASSESSMENT_2021"]),
+        "median_home_rate": med(homes["EFF"]),
+        "median_value_growth": med(group["GROWTH"]),
+        "median_long_change": med(group["LONG"]),
+        "share_new": round(float((group["FIRST"] >= 2013).mean()), 4),
+        "share_detached": round(float((homes["TYPE"] == "D").mean()), 4) if len(homes) else None,
+        "share_condo_town": round(float(homes["TYPE"].isin(["C", "T"]).mean()), 4) if len(homes) else None,
+    }
 
 
 def summarise(group):
@@ -60,6 +97,7 @@ def summarise(group):
         "total_tax_2021": round(float(group["TAXES_2021"].sum())),
         "share_increase": round(float((pct > 0).mean()), 4),
         "share_decrease": round(float((pct < 0).mean()), 4),
+        **extras(group),
     }
 
 
@@ -112,17 +150,36 @@ def main():
     (OUT_DIR / "summary.json").write_text(json.dumps(summary, indent=1))
 
     # Compact lookup table: one short array per property.
+    if "TYPE" not in df:
+        df["TYPE"] = None
+        df["FIRST"] = None
     cols = ["PROPERTY_ADDRESS", "WARD", "ROLL_NO", "ASSESSMENT_2021",
             "TAXES_2020", "TAXES_2021", "DOLLAR_CHANGE_TAXES", "PERCENT_CHANGE_TAXES",
-            "LAT", "LON"]
+            "LAT", "LON", "TYPE", "FIRST"]
     lookup = df.sort_values("PROPERTY_ADDRESS")[cols]
+    nan = lambda v: None if pd.isna(v) else v
     rows = [[r[0], int(r[1]), r[2], int(r[3]), int(r[4]), int(r[5]), int(r[6]), float(r[7]),
-             None if pd.isna(r[8]) else r[8], None if pd.isna(r[9]) else r[9]]
+             nan(r[8]), nan(r[9]), nan(r[10]), None if pd.isna(r[11]) else int(r[11])]
             for r in lookup.itertuples(index=False)]
     (OUT_DIR / "properties.json").write_text(
         json.dumps({"columns": ["address", "ward", "roll", "assessment", "tax2020",
-                                "tax2021", "change", "pct", "lat", "lon"], "rows": rows},
+                                "tax2021", "change", "pct", "lat", "lon", "type", "first"], "rows": rows},
                    separators=(",", ":")))
+
+    # Tax history per property, one file per ward, loaded when a property is looked up.
+    hist = history if "TAX_2011" in df else None
+    if hist:
+        years = hist.TAX_YEARS
+        cols = {y: ("TAXES_2020" if y == 2020 else "TAXES_2021" if y == 2021 else f"TAX_{y}") for y in years}
+        hdir = OUT_DIR / "history"
+        hdir.mkdir(exist_ok=True)
+        for ward, g in df[df["WARD"] > 0].groupby("WARD"):
+            vals = g[[cols[y] for y in years]]
+            out = {roll: [None if pd.isna(v) else int(v) for v in row]
+                   for roll, row in zip(g["ROLL_NO"], vals.itertuples(index=False))}
+            (hdir / f"ward-{int(ward)}.json").write_text(json.dumps({"years": years, "tax": out}, separators=(",", ":")))
+        summary["types"] = hist.TYPE_LABELS
+        (OUT_DIR / "summary.json").write_text(json.dumps(summary, indent=1))
 
     print(json.dumps(notes, indent=1))
     print(f"City median change: {city['median_percent_change']}% (${city['median_dollar_change']})")

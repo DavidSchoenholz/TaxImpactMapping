@@ -45,7 +45,21 @@
   --lot-up-2:   #f2aaa0;
   --lot-up-3:   #dc5a4e;
   --lot-up-4:   #8f1f1e;   /* biggest increases */
+  --lot-up-5:   #4f0e0d;   /* largest long-run increases */
   --lot-none:   #e6e2d6;   /* not paying less / no tax */
+
+  /* Property types on the map. */
+  --type-D: #4e79a7;   /* detached */
+  --type-S: #76b7b2;   /* semi-detached or link */
+  --type-T: #f28e2b;   /* townhouse */
+  --type-C: #b07aa1;   /* condo unit */
+  --type-P: #e15759;   /* house with 2 to 6 units */
+  --type-A: #9c755f;   /* apartment building */
+  --type-V: #d9d5c9;   /* vacant land */
+  --type-F: #8cd17d;   /* farm */
+  --type-B: #edc948;   /* commercial */
+  --type-I: #6b6b6b;   /* industrial */
+  --type-O: #bab0ac;   /* other */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -194,6 +208,10 @@ h3 { margin: 0 0 8px; line-height: 1.2; }
 .seg button:last-child { border-right: 0; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 
+.picker { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: .92rem; color: var(--text-soft); }
+.picker select { font: inherit; font-weight: 600; color: var(--text); background: var(--card-bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-width: 260px; }
+.measure-desc { margin: -4px 0 14px; max-width: 80ch; }
+.popup-more { margin-top: 6px; padding-top: 6px; border-top: 1px solid #ddd; color: #555; font-size: 12.5px; }
 .map-layout { display: grid; grid-template-columns: 1fr 320px; gap: 18px; align-items: stretch; }
 .map-wrap { position: relative; min-height: 0; }
 #map-slot, #map { height: 100%; min-height: 560px; border-radius: 14px; }
@@ -280,6 +298,15 @@ tfoot td { border-bottom: 0; }
 .step-bar.up { background: var(--increase); }
 .step-bar.down { background: var(--decrease); }
 
+.mini-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.mini-list li { display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--line); }
+.mini-list strong { font-variant-numeric: tabular-nums; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+#types-table td, #types-table th { padding: 10px 12px; }
+#types-table th { white-space: normal; vertical-align: bottom; }
+.history { margin: 14px 0 4px; }
+.history-title { margin: 0 0 4px; font-size: .95rem; }
+.history svg { width: 100%; max-width: 520px; height: auto; display: block; }
 .open-qs { max-width: 70ch; padding-left: 22px; }
 .open-qs li { margin: 0 0 14px; font-size: 1.05rem; color: var(--text-soft); }
 .explain table td, .explain table th, #ratio-table td, #ratio-table th { padding: 8px 12px; }
